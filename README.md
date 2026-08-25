@@ -1,6 +1,6 @@
 # AETRE: Adaptive Epistemic Triage & Recall Engine
 
-[![DOI: 10.2139/ssrn.7161458](https://img.shields.io/badge/DOI-10.2139%2Fssrn.7161458-blue.svg)](https://doi.org/10.2139/ssrn.7161458)
+[![Zenodo DOI](https://zenodo.org/badge/1346232534.svg)](https://doi.org/10.5281/zenodo.22098366)
 [![SSRN: 7161458](https://img.shields.io/badge/SSRN-7161458-blue.svg)](https://ssrn.com/abstract=7161458)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-green.svg)](LICENSE)
 [![Rust: 1.75+](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)

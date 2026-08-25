@@ -6,6 +6,7 @@ authors:
   - family-names: "Gray"
     given-names: "Clayton"
 version: "0.1.0"
+doi: "10.5281/zenodo.22098366"
 date-released: "2026-08-25"
 license: "AGPL-3.0-or-later"
 repository-code: "https://github.com/grayclayton/aetre"
