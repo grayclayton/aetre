@@ -1,0 +1,14 @@
+# Smithery MCP Server Manifest
+# Documentation: https://smithery.ai/docs/config
+
+startCommand:
+  type: stdio
+  config:
+    command: cargo
+    args:
+      - run
+      - --release
+      - --manifest-path
+      - Cargo.toml
+      - -p
+      - aetre-mcp
