@@ -1,0 +1,14 @@
+[package]
+name = "aetre-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Core mathematical algorithms and queueing engine for AETRE"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8"
+rand_distr = "0.4"
+sha2 = "0.10.8"

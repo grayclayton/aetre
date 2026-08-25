@@ -1,0 +1,26 @@
+[
+  {
+    "id": "SYNTH-CODE-001",
+    "domain": "Machine Learning Systems",
+    "title": "Synthetic reproducible benchmark",
+    "repository_url": "https://example.invalid/synthetic/reproducible",
+    "code_language": "Rust",
+    "has_runnable_benchmark": true,
+    "claimed_throughput_speedup": "2.0x synthetic claim",
+    "sandboxed_execution_status": "SYNTHETIC_PASS",
+    "target_test_focus": "Runnable-artifact routing",
+    "abstract": "Fictional code artifact for parser tests; the URL is intentionally non-resolving."
+  },
+  {
+    "id": "SYNTH-CODE-002",
+    "domain": "Machine Learning Systems",
+    "title": "Synthetic incomplete benchmark",
+    "repository_url": "https://example.invalid/synthetic/incomplete",
+    "code_language": "Python",
+    "has_runnable_benchmark": false,
+    "claimed_throughput_speedup": "Unverified synthetic claim",
+    "sandboxed_execution_status": "NOT_RUN",
+    "target_test_focus": "Unverified-artifact routing",
+    "abstract": "Fictional code artifact for parser tests; the URL is intentionally non-resolving."
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "stable-external-id",
+    "label": 1,
+    "score": 0.73,
+    "baseline_score": 0.61,
+    "split": "test",
+    "subgroup": "example-domain"
+  },
+  {
+    "id": "another-external-id",
+    "label": 0,
+    "score": 0.28,
+    "baseline_score": 0.44,
+    "split": "test",
+    "subgroup": "example-domain"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "SYNTH-REVIEW-001",
+    "domain": "Machine Learning",
+    "title": "Synthetic boundary-review candidate",
+    "authors": [
+      "Fictional Research Group"
+    ],
+    "review_scores": [
+      4,
+      8,
+      5,
+      7
+    ],
+    "reviewer_confidence": [
+      3,
+      3,
+      2,
+      4
+    ],
+    "mean_score": 6,
+    "score_variance": 2.5,
+    "is_boundary_case": true,
+    "historical_decision": "Synthetic label: additional review",
+    "unconventional_novelty": 0.8,
+    "target_test_focus": "VOI boundary triage",
+    "abstract_text": "Fictional record created solely to test review-allocation parsing and routing."
+  },
+  {
+    "id": "SYNTH-REVIEW-002",
+    "domain": "Machine Learning",
+    "title": "Synthetic consensus candidate",
+    "authors": [
+      "Fictional Systems Lab"
+    ],
+    "review_scores": [
+      8,
+      8,
+      9,
+      8
+    ],
+    "reviewer_confidence": [
+      4,
+      4,
+      4,
+      4
+    ],
+    "mean_score": 8.25,
+    "score_variance": 0.19,
+    "is_boundary_case": false,
+    "historical_decision": "Synthetic label: accept",
+    "unconventional_novelty": 0.5,
+    "target_test_focus": "Fast-pass routing",
+    "abstract_text": "Fictional record created solely to test low-variance routing."
+  }
+]

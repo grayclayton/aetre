@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/aetre-core",
+    "crates/aetre-cli",
+    "crates/aetre-mcp",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Clayton Gray"]
+license = "AGPL-3.0-or-later"
+description = "Adaptive Epistemic Triage & Recall Engine (AETRE) based on The Innovation-Absorption Gap"
+repository = "https://github.com/grayclayton/aetre"

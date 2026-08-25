@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "aetre-triage": {
+      "command": "cargo",
+      "args": ["run", "--release", "-p", "aetre-mcp"],
+      "description": "AETRE Epistemic Triage Engine: VOI calculation, Kingman Heavy-Traffic queue governance, Proposition 1 bounds, exploration audits, and anti-spam staking"
+    }
+  }
+}

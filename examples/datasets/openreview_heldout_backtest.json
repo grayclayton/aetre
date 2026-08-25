@@ -1,0 +1,346 @@
+[
+  {
+    "id": "synthetic_001",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "test",
+    "title": "Synthetic review-allocation fixture 001",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        4.7,
+        7.1000000000000005
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 5.9,
+      "preliminary_variance": 1.44,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Reject"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        4,
+        8
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 5.95,
+      "full_panel_variance": 1.44,
+      "full_panel_decision": "Accept",
+      "decision_flip_label": 1,
+      "significant_disagreement_label": 1,
+      "heldout_error_magnitude": 0.09999999999999964
+    },
+    "label": 1,
+    "subgroup": "SYNTHETIC_2026"
+  },
+  {
+    "id": "synthetic_002",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "test",
+    "title": "Synthetic review-allocation fixture 002",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        5.8999999999999995,
+        6.3
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 6.1,
+      "preliminary_variance": 0.04,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Accept"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        6,
+        6
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 6.05,
+      "full_panel_variance": 0.04,
+      "full_panel_decision": "Reject",
+      "decision_flip_label": 0,
+      "significant_disagreement_label": 0,
+      "heldout_error_magnitude": 0.09999999999999964
+    },
+    "label": 0,
+    "subgroup": "SYNTHETIC_2026"
+  },
+  {
+    "id": "synthetic_003",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "test",
+    "title": "Synthetic review-allocation fixture 003",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        3.9000000000000004,
+        4.5
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 4.2,
+      "preliminary_variance": 0.09,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Reject"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        4,
+        5
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 4.35,
+      "full_panel_variance": 0.09,
+      "full_panel_decision": "Reject",
+      "decision_flip_label": 0,
+      "significant_disagreement_label": 0,
+      "heldout_error_magnitude": 0.2999999999999998
+    },
+    "label": 0,
+    "subgroup": "SYNTHETIC_2026"
+  },
+  {
+    "id": "synthetic_004",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "test",
+    "title": "Synthetic review-allocation fixture 004",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        4,
+        7
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 5.5,
+      "preliminary_variance": 2.25,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Reject"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        8,
+        7
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 6.5,
+      "full_panel_variance": 2.25,
+      "full_panel_decision": "Accept",
+      "decision_flip_label": 1,
+      "significant_disagreement_label": 1,
+      "heldout_error_magnitude": 2
+    },
+    "label": 1,
+    "subgroup": "SYNTHETIC_2026"
+  },
+  {
+    "id": "synthetic_005",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "test",
+    "title": "Synthetic review-allocation fixture 005",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        7.3999999999999995,
+        8.2
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 7.8,
+      "preliminary_variance": 0.16,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Accept"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        8,
+        8
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 7.9,
+      "full_panel_variance": 0.16,
+      "full_panel_decision": "Reject",
+      "decision_flip_label": 0,
+      "significant_disagreement_label": 0,
+      "heldout_error_magnitude": 0.20000000000000018
+    },
+    "label": 0,
+    "subgroup": "SYNTHETIC_2026"
+  },
+  {
+    "id": "synthetic_006",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "test",
+    "title": "Synthetic review-allocation fixture 006",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        5,
+        6.6
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 5.8,
+      "preliminary_variance": 0.64,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Reject"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        3,
+        7
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 5.4,
+      "full_panel_variance": 0.64,
+      "full_panel_decision": "Accept",
+      "decision_flip_label": 1,
+      "significant_disagreement_label": 1,
+      "heldout_error_magnitude": 0.7999999999999998
+    },
+    "label": 1,
+    "subgroup": "SYNTHETIC_2026"
+  },
+  {
+    "id": "synthetic_007",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "dev",
+    "title": "Synthetic review-allocation fixture 007",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        5,
+        7
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 6,
+      "preliminary_variance": 1,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Accept"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        7,
+        7
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 6.5,
+      "full_panel_variance": 1,
+      "full_panel_decision": "Accept",
+      "decision_flip_label": 1,
+      "significant_disagreement_label": 1,
+      "heldout_error_magnitude": 1
+    },
+    "label": 1,
+    "subgroup": "SYNTHETIC_2026"
+  },
+  {
+    "id": "synthetic_008",
+    "venue": "SYNTHETIC",
+    "year": 2026,
+    "split": "dev",
+    "title": "Synthetic review-allocation fixture 008",
+    "abstract_text": "Artificially generated record for exercising the AETRE held-out backtest. It does not describe a real paper or review.",
+    "provenance": "AETRE_SYNTHETIC_FIXTURE",
+    "pre_triage_data": {
+      "m_reviews_count": 2,
+      "initial_review_scores": [
+        3.4,
+        4.2
+      ],
+      "initial_reviewer_confidences": [
+        3,
+        3
+      ],
+      "preliminary_mean": 3.8,
+      "preliminary_variance": 0.16,
+      "preliminary_mean_confidence": 3,
+      "preliminary_decision": "Reject"
+    },
+    "heldout_evaluation_data": {
+      "heldout_reviews_count": 2,
+      "heldout_scores": [
+        4,
+        4
+      ],
+      "heldout_confidences": [
+        3,
+        3
+      ],
+      "full_panel_mean": 3.9,
+      "full_panel_variance": 0.16,
+      "full_panel_decision": "Reject",
+      "decision_flip_label": 0,
+      "significant_disagreement_label": 0,
+      "heldout_error_magnitude": 0.20000000000000018
+    },
+    "label": 0,
+    "subgroup": "SYNTHETIC_2026"
+  }
+]

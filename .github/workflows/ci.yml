@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Lint
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --workspace --locked
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --version 0.22.2 --locked
+      - name: Audit Rust dependencies
+        run: cargo audit
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build --tag aetre:ci .
+      - name: Start image
+        run: docker run --detach --name aetre-ci --env AETRE_HTTP_SERVER_TOKEN=ci-token --publish 8080:8080 aetre:ci
+      - name: Test status, authentication, and receipt behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8080/api/status >/tmp/status.json; then
+              break
+            fi
+            sleep 1
+          done
+          grep -q '"tools_count":20' /tmp/status.json
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header 'Content-Type: application/json' \
+            --data '{"name":"aetre_system_catalog","arguments":{}}' \
+            http://127.0.0.1:8080/api/tool)" = "401"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header 'Content-Type: application/json' \
+            --header 'X-AETRE-Server-Token: ci-token' \
+            --data '{"name":"aetre_system_catalog","arguments":{}}' \
+            http://127.0.0.1:8080/api/tool)" = "200"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            http://127.0.0.1:8080/api/verify/arbitrary)" = "404"
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs aetre-ci
+      - name: Stop image
+        if: always()
+        run: docker rm --force aetre-ci

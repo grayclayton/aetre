@@ -1,0 +1,46 @@
+[
+  {
+    "id": "PROP-2026-001",
+    "domain": "Machine Learning & AI Science",
+    "title": "Quantum-Assisted Battery Electrolyte Synthesis",
+    "authors": ["Dr. Elena Rostova", "Solid State Physics Group"],
+    "abstract": "We propose a novel hybrid quantum-classical variational eigensolver approach to simulate transition states in fluorinated solid-state electrolytes. Preliminary density functional theory shows extreme non-linear ionic conductivity at low temperatures, with high variance across cathode interfaces. Requires deep empirical validation in dry-room testbeds to confirm structural stability against dendrite penetration.",
+    "latent_quality_estimate": 1.65,
+    "epistemic_variance": 0.95,
+    "unconventional_novelty_score": 0.88,
+    "recommended_triage_stream": "Deep Review Queue (High VOI Boundary Case)"
+  },
+  {
+    "id": "PROP-2026-002",
+    "domain": "Enterprise Software",
+    "title": "Enterprise Customer Support AI Wrapper",
+    "authors": ["CloudScale Labs Inc."],
+    "abstract": "An automated prompt-chaining integration layer that connects GPT-4 to existing Zendesk and Salesforce ticketing databases. Standard retrieval-augmented generation (RAG) with vector search over corporate PDFs. Demonstrates 15% faster ticket resolution on routine inquiries with predictable incremental performance.",
+    "latent_quality_estimate": 0.85,
+    "epistemic_variance": 0.15,
+    "unconventional_novelty_score": 0.12,
+    "recommended_triage_stream": "Conventional Fast-Pass"
+  },
+  {
+    "id": "PROP-2026-003",
+    "domain": "Synthetic Biology & Cleantech",
+    "title": "Non-Canonical Amino Acid Biosensor for Pesticide Runoff",
+    "authors": ["BioFrontier Research Initiative"],
+    "abstract": "Engineered cell-free expression platforms incorporating synthetic pyrrolysyl-tRNA synthetase variants to detect sub-nanomolar agricultural pesticide runoff. The reaction kinetics exhibit ambiguous initial luminescence curves near the detection boundary. Deep enzyme sequencing and HPLC verification are required to resolve false-positive binding.",
+    "latent_quality_estimate": 1.40,
+    "epistemic_variance": 0.70,
+    "unconventional_novelty_score": 0.76,
+    "recommended_triage_stream": "Deep Review Queue (Optimal for VOI Allocation)"
+  },
+  {
+    "id": "PROP-2026-004",
+    "domain": "Cryptographic Protocols",
+    "title": "Decentralized Autonomous Grant Voting Protocol",
+    "authors": ["Anonymous Web3 Collective"],
+    "abstract": "A zero-knowledge quadratic funding smart contract on Ethereum L2 that leverages decentralized token staking and AI reputation heuristics to auto-curate open source public goods. The whitepaper contains generated boilerplates with unverified game-theoretic convergence assumptions.",
+    "latent_quality_estimate": -0.40,
+    "epistemic_variance": 0.25,
+    "unconventional_novelty_score": 0.20,
+    "recommended_triage_stream": "Fast-Reject (Low Signal Spam)"
+  }
+]

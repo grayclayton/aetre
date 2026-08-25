@@ -1,0 +1,18 @@
+# Rust build outputs
+/target/
+**/*.rs.bk
+*.log
+*.tmp
+
+# Environment and secrets
+.env
+.env.*
+*.secret
+.aetre/
+license.key
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

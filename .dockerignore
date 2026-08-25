@@ -1,0 +1,7 @@
+.git
+.github
+.aetre
+target
+examples
+*.md
+fly.toml

@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software in academic or industrial research, please cite both the software engine and the theoretical working paper."
+title: "AETRE: Adaptive Epistemic Triage & Recall Engine"
+abstract: "A high-performance mathematical operations research and Bayesian Value-of-Information (VOI) engine designed to optimize review resource allocation, prevent congestion collapse, and eliminate selection bias under AI proposal floods."
+authors:
+  - family-names: "Gray"
+    given-names: "Clayton"
+version: "0.1.0"
+date-released: "2026-08-25"
+license: "AGPL-3.0-or-later"
+repository-code: "https://github.com/grayclayton/aetre"
+url: "https://github.com/grayclayton/aetre"
+keywords:
+  - "epistemic triage"
+  - "value of information"
+  - "peer review"
+  - "queueing theory"
+  - "kingman heavy traffic"
+  - "pareto distributions"
+  - "venture capital dealflow"
+  - "model context protocol"
+  - "rust"
+references:
+  - type: article
+    authors:
+      - family-names: "Gray"
+        given-names: "Clayton"
+    title: "The Innovation-Absorption Gap: How Artificial Intelligence Can Accelerate Idea Production Faster Than Complementary Institutions Adapt"
+    year: 2026
+    url: "https://ssrn.com/abstract=7161458"
+    institution: "SSRN Working Paper Series"

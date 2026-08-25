@@ -1,0 +1,28 @@
+[
+  {
+    "id": "SYNTH-GRANT-001",
+    "domain": "Biomedical Research",
+    "title": "Synthetic high-uncertainty grant",
+    "principal_investigator": "Fictional Investigator A",
+    "requested_budget_usd": 500000,
+    "initial_priority_percentile": 14,
+    "unconventional_risk_score": 0.8,
+    "epistemic_variance": 1.6,
+    "historical_funding_outcome": "Synthetic label: boundary",
+    "target_test_focus": "VOI review allocation",
+    "abstract": "Fictional grant record for parser and routing tests."
+  },
+  {
+    "id": "SYNTH-GRANT-002",
+    "domain": "Biomedical Research",
+    "title": "Synthetic consensus grant",
+    "principal_investigator": "Fictional Investigator B",
+    "requested_budget_usd": 250000,
+    "initial_priority_percentile": 7,
+    "unconventional_risk_score": 0.2,
+    "epistemic_variance": 0.2,
+    "historical_funding_outcome": "Synthetic label: funded",
+    "target_test_focus": "Fast-pass routing",
+    "abstract": "Fictional grant record for parser and routing tests."
+  }
+]

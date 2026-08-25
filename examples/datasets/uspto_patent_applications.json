@@ -1,0 +1,28 @@
+[
+  {
+    "id": "SYNTH-PATENT-001",
+    "domain": "Energy Storage",
+    "title": "Synthetic battery-control application",
+    "assignee": "Fictional Materials Company",
+    "cpc_class": "SYNTH-H01M",
+    "claims_count": 18,
+    "historical_pendency_months": 24,
+    "examiner_utilization_rho": 0.93,
+    "office_action_count": 2,
+    "target_test_focus": "Congestion-aware routing",
+    "abstract": "Fictional patent application for parser and queue-governor tests."
+  },
+  {
+    "id": "SYNTH-PATENT-002",
+    "domain": "Data Processing",
+    "title": "Synthetic scheduling application",
+    "assignee": "Fictional Software Cooperative",
+    "cpc_class": "SYNTH-G06F",
+    "claims_count": 10,
+    "historical_pendency_months": 12,
+    "examiner_utilization_rho": 0.7,
+    "office_action_count": 1,
+    "target_test_focus": "Normal-load routing",
+    "abstract": "Fictional patent application for parser and queue-governor tests."
+  }
+]
