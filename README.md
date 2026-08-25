@@ -156,13 +156,9 @@ cargo run -p aetre-cli -- staking --base 100 --exponent 1.5 --submissions 20
 
 AETRE provides a native, high-speed Model Context Protocol (MCP) server implementing **20 Tools**, **4 Resources**, and **3 Pre-Configured Prompts** for Claude Desktop, Cursor, and other MCP clients.
 
-### 1-Click Install via Smithery
-```bash
-npx -y @smithery/cli install grayclayton/aetre --client claude
-```
+### Configuration (Claude Desktop / Cursor)
 
-### Manual Configuration (Claude Desktop / Cursor)
-Add to your `claude_desktop_config.json`:
+AETRE runs locally as a high-performance native JSON-RPC 2.0 stdio MCP server. Add to your `claude_desktop_config.json`:
 
 ```json
 {
