@@ -94,12 +94,16 @@ struct JsonRpcError {
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
+    let has_explicit_http_env =
+        std::env::var("AETRE_HTTP_SERVER_TOKEN").is_ok() || std::env::var("PORT").is_ok();
     let is_studio_mode = args
         .iter()
-        .any(|a| a == "--studio" || a == "--serve" || a == "studio" || a == "--web");
+        .any(|a| a == "--studio" || a == "--serve" || a == "studio" || a == "--web")
+        || has_explicit_http_env;
     let no_browser = args
         .iter()
-        .any(|a| a == "--no-browser" || a == "--headless");
+        .any(|a| a == "--no-browser" || a == "--headless")
+        || has_explicit_http_env;
 
     // Only start embedded web server and open browser when explicitly in studio mode
     if is_studio_mode {
@@ -109,7 +113,6 @@ fn main() -> io::Result<()> {
             .unwrap_or(8080);
         let _ = server::start_embedded_server(port, !no_browser);
     }
-
 
     let stdin = io::stdin();
     let stdout = io::stdout();
