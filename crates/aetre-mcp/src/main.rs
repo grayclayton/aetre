@@ -94,7 +94,6 @@ struct JsonRpcError {
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    let is_http_only = args.iter().any(|a| a == "--serve");
     let is_studio_mode = args
         .iter()
         .any(|a| a == "--studio" || a == "--serve" || a == "studio" || a == "--web");
@@ -108,14 +107,9 @@ fn main() -> io::Result<()> {
             .ok()
             .and_then(|value| value.parse::<u16>().ok())
             .unwrap_or(8080);
-        server::start_embedded_server(port, !no_browser)
-            .map_err(|error| io::Error::other(error.to_string()))?;
-        if is_http_only {
-            loop {
-                std::thread::park();
-            }
-        }
+        let _ = server::start_embedded_server(port, !no_browser);
     }
+
 
     let stdin = io::stdin();
     let stdout = io::stdout();

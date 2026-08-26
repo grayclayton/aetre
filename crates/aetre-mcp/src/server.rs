@@ -22,13 +22,13 @@ pub fn start_embedded_server(
     let addr = format!("{}:{}", bind_address, default_port);
     let listener = TcpListener::bind(&addr)?;
 
-    println!("======================================================");
-    println!(" AETRE Headless Engine Server (Pure Rust JSON-RPC)");
-    println!(" Listening:    http://{}/", addr);
-    println!(" API Endpoint: http://{}/api/tool", addr);
-    println!(" Status:       http://{}/api/status", addr);
-    println!(" Mode:         High-Performance Operations Research Core");
-    println!("======================================================");
+    eprintln!("======================================================");
+    eprintln!(" AETRE Headless Engine Server (Pure Rust JSON-RPC)");
+    eprintln!(" Listening:    http://{}/", addr);
+    eprintln!(" API Endpoint: http://{}/api/tool", addr);
+    eprintln!(" Status:       http://{}/api/status", addr);
+    eprintln!(" Mode:         High-Performance Operations Research Core");
+    eprintln!("======================================================");
 
     thread::spawn(move || {
         for stream in listener.incoming().flatten() {

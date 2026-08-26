@@ -34,5 +34,5 @@ ENV AETRE_BIND_ADDRESS=0.0.0.0
 
 USER aetre
 
-ENTRYPOINT ["/app/aetre-mcp", "--serve", "--headless"]
+ENTRYPOINT ["/app/aetre-mcp"]
 
