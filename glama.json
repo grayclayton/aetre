@@ -1,1 +1,16 @@
-{"$schema": "https://glama.ai/mcp/schemas/server.json", "maintainers": ["grayclayton"]}
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "grayclayton"
+  ],
+  "baseImage": "rust:1.80-slim-bullseye",
+  "buildSteps": [
+    "cargo build --release -p aetre-mcp",
+    "mkdir -p /app",
+    "cp target/release/aetre-mcp /app/aetre-mcp",
+    "chmod +x /app/aetre-mcp"
+  ],
+  "cmdArguments": [
+    "/app/aetre-mcp"
+  ]
+}
