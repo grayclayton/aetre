@@ -5,6 +5,15 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="$DIR/target/release/aetre-mcp-bin"
 
 if [ ! -f "$BIN" ]; then
+    # Ensure C compiler / linker is present for building native artifacts
+    if ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
+        if command -v apt-get >/dev/null 2>&1; then
+            echo "[AETRE] Installing C compiler/linker (gcc)..." >&2
+            apt-get update >&2 && apt-get install -y --no-install-recommends gcc libc6-dev >&2
+        fi
+    fi
+
+    # Ensure cargo is in PATH
     if ! command -v cargo >/dev/null 2>&1; then
         if [ -f "$HOME/.cargo/env" ]; then
             . "$HOME/.cargo/env"
@@ -13,6 +22,7 @@ if [ ! -f "$BIN" ]; then
         fi
     fi
 
+    # If cargo is still missing, install minimal rustup
     if ! command -v cargo >/dev/null 2>&1; then
         echo "[AETRE] Initializing Rust environment for container proxy..." >&2
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal >&2
