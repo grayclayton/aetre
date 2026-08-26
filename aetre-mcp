@@ -1,0 +1,31 @@
+#!/bin/bash
+set -e
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN="$DIR/target/release/aetre-mcp-bin"
+
+if [ ! -f "$BIN" ]; then
+    if ! command -v cargo >/dev/null 2>&1; then
+        if [ -f "$HOME/.cargo/env" ]; then
+            . "$HOME/.cargo/env"
+        elif [ -f "/root/.cargo/env" ]; then
+            . "/root/.cargo/env"
+        fi
+    fi
+
+    if ! command -v cargo >/dev/null 2>&1; then
+        echo "[AETRE] Initializing Rust environment for container proxy..." >&2
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal >&2
+        if [ -f "$HOME/.cargo/env" ]; then
+            . "$HOME/.cargo/env"
+        elif [ -f "/root/.cargo/env" ]; then
+            . "/root/.cargo/env"
+        fi
+    fi
+
+    echo "[AETRE] Compiling AETRE MCP release binary..." >&2
+    cargo build --release -p aetre-mcp --manifest-path "$DIR/Cargo.toml" >&2
+    cp "$DIR/target/release/aetre-mcp" "$BIN"
+fi
+
+exec "$BIN" "$@"
