@@ -5,37 +5,42 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="$DIR/target/release/aetre-mcp-bin"
 
 if [ ! -f "$BIN" ]; then
-    # Ensure C compiler / linker is present for building native artifacts
-    if ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
-        if command -v apt-get >/dev/null 2>&1; then
-            echo "[AETRE] Installing C compiler/linker (gcc)..." >&2
-            apt-get update >&2 && apt-get install -y --no-install-recommends gcc libc6-dev >&2
-        fi
-    fi
+    mkdir -p "$DIR/target/release"
 
-    # Ensure cargo is in PATH
-    if ! command -v cargo >/dev/null 2>&1; then
-        if [ -f "$HOME/.cargo/env" ]; then
-            . "$HOME/.cargo/env"
-        elif [ -f "/root/.cargo/env" ]; then
-            . "/root/.cargo/env"
+    # 1. Fast path: Download pre-compiled release binary (~0.5s)
+    if curl -fsSL "https://github.com/grayclayton/aetre/releases/download/v0.1.0/aetre-mcp" -o "$BIN" 2>/dev/null && [ -s "$BIN" ]; then
+        chmod +x "$BIN"
+    else
+        # 2. Fallback path: Compile from source if pre-built binary is not available
+        if ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
+            if command -v apt-get >/dev/null 2>&1; then
+                echo "[AETRE] Installing C compiler/linker (gcc)..." >&2
+                apt-get update >&2 && apt-get install -y --no-install-recommends gcc libc6-dev >&2
+            fi
         fi
-    fi
 
-    # If cargo is still missing, install minimal rustup
-    if ! command -v cargo >/dev/null 2>&1; then
-        echo "[AETRE] Initializing Rust environment for container proxy..." >&2
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal >&2
-        if [ -f "$HOME/.cargo/env" ]; then
-            . "$HOME/.cargo/env"
-        elif [ -f "/root/.cargo/env" ]; then
-            . "/root/.cargo/env"
+        if ! command -v cargo >/dev/null 2>&1; then
+            if [ -f "$HOME/.cargo/env" ]; then
+                . "$HOME/.cargo/env"
+            elif [ -f "/root/.cargo/env" ]; then
+                . "/root/.cargo/env"
+            fi
         fi
-    fi
 
-    echo "[AETRE] Compiling AETRE MCP release binary..." >&2
-    cargo build --release -p aetre-mcp --manifest-path "$DIR/Cargo.toml" >&2
-    cp "$DIR/target/release/aetre-mcp" "$BIN"
+        if ! command -v cargo >/dev/null 2>&1; then
+            echo "[AETRE] Initializing Rust environment for container proxy..." >&2
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal >&2
+            if [ -f "$HOME/.cargo/env" ]; then
+                . "$HOME/.cargo/env"
+            elif [ -f "/root/.cargo/env" ]; then
+                . "/root/.cargo/env"
+            fi
+        fi
+
+        echo "[AETRE] Compiling AETRE MCP release binary..." >&2
+        cargo build --release -p aetre-mcp --manifest-path "$DIR/Cargo.toml" >&2
+        cp "$DIR/target/release/aetre-mcp" "$BIN"
+    fi
 fi
 
 exec "$BIN" "$@"

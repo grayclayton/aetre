@@ -1,0 +1,26 @@
+name: Release Binary
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build MCP release binary
+        run: cargo build --locked --release -p aetre-mcp
+      - name: Strip binary
+        run: strip target/release/aetre-mcp
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: AETRE MCP ${{ github.ref_name }}
+          files: target/release/aetre-mcp
