@@ -130,6 +130,11 @@ cargo run -p aetre-cli -- shadow-pilot --mode simulate --budget 50 --audit-rate 
 cargo run -p aetre-cli -- validate-predictions --file examples/validation_schema.json --budget 20 --threshold 0.5
 ```
 
+The retrospective backtest's AETRE policy is a frozen **Calibrated Rescue
+Score** with empirically specified coefficients. It is motivated by
+boundary-crossing value of information, but it is distinct from the analytical
+Bayesian VOI calculation implemented by `aetre-core`.
+
 ### 5. Evaluate Theoretical Proposition 1 Bounds
 ```bash
 cargo run -p aetre-cli -- bound --arrivals 5000 --capacity 200 --high-rate 0.067 --csv

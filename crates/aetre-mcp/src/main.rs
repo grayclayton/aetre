@@ -419,7 +419,7 @@ pub fn read_resource(uri: &str) -> Result<Value, String> {
                         "id": "paperswithcode",
                         "name": "Synthetic Code-Artifact Fixture",
                         "source": "AETRE_SYNTHETIC_FIXTURE",
-                        "target_test": "Sandboxed WASI Code Execution & Proof Verification",
+                        "target_test": "Reported Code-Artifact Status Parsing",
                         "records_file": "examples/datasets/papers_with_code.json",
                         "resource_uri": "aetre://datasets/paperswithcode",
                         "description": "Fictional code artifacts and non-resolving URLs for parser tests.",
@@ -1778,7 +1778,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_check_governor",
                     "Kingman Heavy-Traffic Capacity Governor & Auto-Throttling",
-                    "Grant Agencies & Academic Publishers ($25,000–$250,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -1861,7 +1861,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_exploration_audit",
                     "5% Horvitz-Thompson Counterfactual Exploration Audits",
-                    "Government Grant Agencies & Sovereign R&D Funds ($100,000–$500,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -1918,7 +1918,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_evaluate_staking",
                     "Endogenous Submitter Entry Equilibrium Simulation",
-                    "Startup Accelerators & Grand Challenge Prizes ($15,000–$50,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -2018,7 +2018,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_correlated_posterior_update",
                     "Multi-Agent Reviewer Debiasing & Correlation Removal",
-                    "Publishers, Conferences & Institutional Enterprise ($25,000–$250,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -2090,7 +2090,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_heavy_tailed_voi",
                     "Heavy-Tailed Pareto Black Swan Discovery",
-                    "VC & Institutional Enterprise ($15,000–$40,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -2158,7 +2158,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_quadratic_staking",
                     "Super-Linear Anti-Sybil Quadratic Staking",
-                    "Startup Accelerators & Grand Challenge Prizes ($15,000–$50,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -2213,7 +2213,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_heterogeneous_queues",
                     "Heterogeneous Specialist Reviewer Queue Balancer",
-                    "Patent Offices & Corporate R&D ($75,000–$250,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -2371,7 +2371,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_simulate_benchmark",
                     "Monte Carlo Multi-Regime Benchmark Simulator",
-                    "VC & Institutional Enterprise ($15,000–$250,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [
@@ -2825,7 +2825,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 let paywall = generate_tier_locked_payload(
                     "aetre_congestion_matching",
                     "Congestion-Aware Reviewer-to-Proposal Matching & Kingman Load Balancer",
-                    "Enterprise Conference & Grant Agencies ($25,000–$250,000/yr)",
+                    "Enterprise commercial license (see portal for current terms)",
                 );
                 return json!({
                     "content": [

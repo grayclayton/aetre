@@ -1,7 +1,7 @@
 //! Held-Out Review Backtesting Engine for AETRE
 //!
 //! Evaluates 8 peer-review triage and allocation policies under a common fixed review budget K:
-//! 1. AETRE (Bayesian Value of Information)
+//! 1. AETRE (Calibrated Rescue Score)
 //! 2. Random Allocation
 //! 3. Closest-to-Boundary Allocation
 //! 4. Highest-Variance Allocation
@@ -241,8 +241,13 @@ fn paired_bootstrap_ci(
     )
 }
 
-/// Computes Asymmetric Upward Rescue Bayesian Value of Information
-pub fn compute_candidate_bayesian_voi(pre_data: &PreTriageData, boundary: f64) -> f64 {
+/// Computes the frozen asymmetric rescue-ranking score used by the
+/// retrospective conference benchmark.
+///
+/// This score is motivated by boundary-crossing value of information, but its
+/// coefficients are empirically specified rather than derived from the
+/// analytical VOI implementation in `aetre-core`.
+pub fn compute_calibrated_rescue_score(pre_data: &PreTriageData, boundary: f64) -> f64 {
     let mean = pre_data.preliminary_mean;
     let scores = &pre_data.initial_review_scores;
     let conf = pre_data
@@ -350,7 +355,7 @@ pub fn run_heldout_backtest(args: &[String]) -> Result<String, String> {
     let calibrator = if !calib_records.is_empty() {
         let calib_scores: Vec<f64> = calib_records
             .iter()
-            .map(|r| compute_candidate_bayesian_voi(&r.pre_triage_data, boundary))
+            .map(|r| compute_calibrated_rescue_score(&r.pre_triage_data, boundary))
             .collect();
         let calib_labels: Vec<u8> = calib_records.iter().map(|r| r.label).collect();
         PlattCalibrator::fit(&calib_scores, &calib_labels, 1000, 0.05)
@@ -392,7 +397,7 @@ pub fn run_heldout_backtest(args: &[String]) -> Result<String, String> {
     let aetre_scores: Vec<f64> = eval_records
         .iter()
         .map(|r| {
-            let raw_voi = compute_candidate_bayesian_voi(&r.pre_triage_data, boundary);
+            let raw_voi = compute_calibrated_rescue_score(&r.pre_triage_data, boundary);
             calibrator.predict_probability(raw_voi)
         })
         .collect();
@@ -457,7 +462,11 @@ pub fn run_heldout_backtest(args: &[String]) -> Result<String, String> {
         .collect();
 
     let policies: Vec<(&str, Vec<f64>, bool)> = vec![
-        ("AETRE (Bayesian VOI)", aetre_scores.clone(), true),
+        (
+            "AETRE (Calibrated Rescue Score)",
+            aetre_scores.clone(),
+            true,
+        ),
         ("Random Allocation", random_scores, false),
         ("Closest-to-Boundary", boundary_scores, false),
         ("Highest-Variance", variance_scores, false),

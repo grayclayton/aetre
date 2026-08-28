@@ -993,21 +993,22 @@ fn run_test_dataset_cmd(args: &[String]) {
         }
     } else if let Ok(records) = serde_json::from_str::<Vec<PapersWithCodeRecord>>(&content) {
         for r in records {
-            let is_verified = r
-                .sandboxed_execution_status
-                .to_lowercase()
-                .contains("verified");
-            let (routing, voi, rationale) = if is_verified {
+            let reported_status = r.sandboxed_execution_status.trim().to_ascii_lowercase();
+            let is_reported_verified = matches!(
+                reported_status.as_str(),
+                "verified" | "passed" | "pass" | "success" | "synthetic_pass"
+            );
+            let (routing, voi, rationale) = if is_reported_verified {
                 (
-                    "🌟 WASM VERIFIED PASS",
+                    "REPORTED ARTIFACT STATUS: PASS",
                     0.015,
-                    "Automated sandboxed test harness verified execution proofs in under 4 seconds.",
+                    "The input record reports a passing or verified artifact status; AETRE did not execute or independently verify the code.",
                 )
             } else {
                 (
-                    "🚫 AUTOMATED REPRO REJECT",
+                    "REPORTED ARTIFACT STATUS: NOT VERIFIED",
                     0.005,
-                    "Deterministic sandbox caught reproducibility bug before wasting human review capacity.",
+                    "The input record does not report a verified artifact status; AETRE did not execute or independently assess the code.",
                 )
             };
 

@@ -37,7 +37,7 @@ impl LicenseTier {
         match self {
             LicenseTier::Community => "Community (Free Open-Core)",
             LicenseTier::Pro => "Pro Author ($19/check or $49/mo)",
-            LicenseTier::Enterprise => "VC & Institutional Enterprise ($15k–$250k/yr)",
+            LicenseTier::Enterprise => "VC & Institutional Enterprise",
         }
     }
 }
@@ -418,8 +418,8 @@ pub fn get_quota_status(tier: LicenseTier) -> Value {
             "tier_name": tier.display_name(),
             "preflight_checks": "UNLIMITED",
             "full_prescriptive_plans": "UNLOCKED",
-            "latex_pdf_scorecard_export": "UNLOCKED",
-            "live_crowd_embeddings": "UNLOCKED",
+            "structured_scorecard_export": "UNLOCKED",
+            "lexical_novelty_diagnostics": "UNLOCKED (not a live corpus ranking)",
             "enterprise_tools_locked": [
                 "aetre_heavy_tailed_voi",
                 "aetre_correlated_posterior_update",
@@ -434,7 +434,7 @@ pub fn get_quota_status(tier: LicenseTier) -> Value {
         LicenseTier::Enterprise => json!({
             "active_tier": tier.as_str(),
             "tier_name": tier.display_name(),
-            "status": "ALL_12_TOOLS_UNLOCKED",
+            "status": "ALL_20_TOOLS_UNLOCKED",
             "preflight_checks": "UNLIMITED",
             "institutional_queue_governor": "UNLOCKED",
             "multi_agent_debiasing": "UNLOCKED",
@@ -494,8 +494,7 @@ pub fn generate_tier_locked_payload(
             "corporate_r_and_d": "Air-gapped on-premise zero-trust invention disclosure portfolio triage."
         },
         "upgrade_options": {
-            "vc_fund_subscription": "$15,000 – $40,000 / year (Unlimited Screening & Webhook Connectors)",
-            "enterprise_agency_contract": "$100,000 – $500,000 / year (Dedicated On-Prem / VPC Instance & Custom Paylines)",
+            "pricing": "See the AETRE portal for current plans and terms.",
             "contact_url": "https://www.lithiumeel.com/aetre"
         },
         "how_to_activate": "Add your Enterprise License Key to AETRE_API_KEY environment variable or pass 'api_key' in your MCP tool parameters."
