@@ -132,15 +132,6 @@ fn handle_http_connection(mut stream: TcpStream) -> std::io::Result<()> {
         return Ok(());
     }
 
-    if let Ok(expected_token) = std::env::var("AETRE_HTTP_SERVER_TOKEN") {
-        if server_token != Some(expected_token.as_str()) {
-            stream.write_all(
-                b"HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-            )?;
-            return Ok(());
-        }
-    }
-
     if method == "GET" {
         let status_json = match path {
             "/api/status" | "/" => {
@@ -229,6 +220,14 @@ fn handle_http_connection(mut stream: TcpStream) -> std::io::Result<()> {
     }
 
     if method == "POST" {
+        if let Ok(expected_token) = std::env::var("AETRE_HTTP_SERVER_TOKEN") {
+            if server_token != Some(expected_token.as_str()) {
+                stream.write_all(
+                    b"HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                )?;
+                return Ok(());
+            }
+        }
         let body_str = if let Some(end) = header_end_pos {
             String::from_utf8_lossy(&raw_data[end..]).to_string()
         } else {
