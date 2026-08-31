@@ -353,11 +353,25 @@ fn aggregate_stats(
     acceptances: usize,
     data: &[SelectionSummary],
 ) -> RegimeStats {
-    let n = data.len() as f64;
     if data.is_empty() {
-        panic!("Cannot aggregate empty data slice");
+        return RegimeStats {
+            regime_name: name.to_string(),
+            arrivals,
+            acceptances,
+            quality_throughput_mean: 0.0,
+            quality_throughput_run_interval: (0.0, 0.0),
+            mean_accepted_quality_mean: 0.0,
+            mean_accepted_quality_run_interval: (0.0, 0.0),
+            unconventional_recall_mean: 0.0,
+            unconventional_recall_run_interval: (0.0, 0.0),
+            false_discovery_rate_mean: 0.0,
+            false_discovery_rate_run_interval: (0.0, 0.0),
+            human_reviews_mean: 0.0,
+            estimated_hidden_unconventional_mean: None,
+        };
     }
 
+    let n = data.len() as f64;
     let qt_vals: Vec<f64> = data.iter().map(|s| s.quality_throughput).collect();
     let mq_vals: Vec<f64> = data.iter().map(|s| s.mean_accepted_quality).collect();
     let ur_vals: Vec<f64> = data
@@ -378,16 +392,14 @@ fn aggregate_stats(
     let ur_run_interval = compute_percentiles(&ur_vals, 0.025, 0.975);
     let fdr_run_interval = compute_percentiles(&fdr_vals, 0.025, 0.975);
 
-    let hidden_mean = {
-        let valid: Vec<f64> = data
-            .iter()
-            .filter_map(|s| s.estimated_hidden_unconventional)
-            .collect();
-        if !valid.is_empty() {
-            Some(valid.iter().sum::<f64>() / valid.len() as f64)
-        } else {
-            None
-        }
+    let hidden_vals: Vec<f64> = data
+        .iter()
+        .filter_map(|s| s.estimated_hidden_unconventional)
+        .collect();
+    let hidden_mean = if hidden_vals.is_empty() {
+        None
+    } else {
+        Some(hidden_vals.iter().sum::<f64>() / hidden_vals.len() as f64)
     };
 
     RegimeStats {
@@ -419,11 +431,12 @@ fn compute_percentiles(vals: &[f64], p_low: f64, p_high: f64) -> (f64, f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::thread_rng;
+    use rand::rngs::StdRng;
+    use rand::SeedableRng;
 
     #[test]
     fn test_zero_noise_does_not_panic() {
-        let mut rng = thread_rng();
+        let mut rng = StdRng::seed_from_u64(42);
         let params = Parameters {
             unmanaged_baseline_noise: 0.0,
             initial_screen_noise: 0.0,
@@ -442,7 +455,7 @@ mod tests {
 
     #[test]
     fn test_extreme_budget_depletion_does_not_panic() {
-        let mut rng = thread_rng();
+        let mut rng = StdRng::seed_from_u64(42);
         let params = Parameters {
             evaluation_budget: 1.0,
             initial_screen_cost: 10.0, // Initial cost will greatly exceed budget
@@ -459,5 +472,12 @@ mod tests {
         let values = vec![1.2, 5.5, 3.1, -0.4, 9.8];
         let top3 = top_indices(&values, 3);
         assert_eq!(top3, vec![4, 1, 2]); // indices of 9.8, 5.5, 3.1
+    }
+
+    #[test]
+    fn test_aggregate_stats_empty_data_does_not_panic() {
+        let stats = aggregate_stats("empty_regime", 100, 10, &[]);
+        assert_eq!(stats.arrivals, 100);
+        assert_eq!(stats.quality_throughput_mean, 0.0);
     }
 }

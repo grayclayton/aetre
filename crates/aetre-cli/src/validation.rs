@@ -162,13 +162,24 @@ pub fn run(args: &[String]) -> Result<String, String> {
     while index < args.len() {
         let value = args.get(index + 1);
         match args[index].as_str() {
-            "--file" => file = value.cloned(),
-            "--output" => output = value.cloned(),
-            "--budget" => budget = value.and_then(|item| item.parse::<usize>().ok()),
-            "--threshold" => threshold = value.and_then(|item| item.parse().ok()).unwrap_or(0.5),
+            "--file" => {
+                file = value.cloned();
+                index += 2;
+            }
+            "--output" => {
+                output = value.cloned();
+                index += 2;
+            }
+            "--budget" => {
+                budget = value.and_then(|item| item.parse::<usize>().ok());
+                index += 2;
+            }
+            "--threshold" => {
+                threshold = value.and_then(|item| item.parse().ok()).unwrap_or(0.5);
+                index += 2;
+            }
             unknown => return Err(format!("unknown option `{unknown}`")),
         }
-        index += 2;
     }
     let file = file.ok_or("--file is required")?;
     let budget = budget.ok_or("--budget must be a non-negative integer")?;

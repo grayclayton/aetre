@@ -71,32 +71,45 @@ pub fn run_shadow_pilot(args: &[String]) -> Result<String, String> {
                 if let Some(v) = val {
                     mode = v.clone();
                 }
+                idx += 2;
             }
-            "--file" | "-f" => file = val.cloned(),
-            "--output" | "-o" => output = val.cloned(),
+            "--file" | "-f" => {
+                file = val.cloned();
+                idx += 2;
+            }
+            "--output" | "-o" => {
+                output = val.cloned();
+                idx += 2;
+            }
             "--budget" | "-k" => {
                 if let Some(v) = val {
                     budget = v.parse().unwrap_or(50);
                 }
+                idx += 2;
             }
             "--boundary" | "-b" => {
                 if let Some(v) = val {
                     boundary = v.parse().unwrap_or(6.0);
                 }
+                idx += 2;
             }
             "--audit-rate" => {
                 if let Some(v) = val {
                     audit_rate = v.parse().unwrap_or(0.05);
                 }
+                idx += 2;
             }
-            "--json" => json_out = true,
+            "--json" => {
+                json_out = true;
+                idx += 1;
+            }
             unknown => {
                 if unknown.starts_with("--") {
                     return Err(format!("unknown option `{unknown}`"));
                 }
+                idx += 1;
             }
         }
-        idx += 2;
     }
 
     let file_path = match file {
@@ -534,5 +547,30 @@ mod tests {
         };
         let s = serde_json::to_string(&manifest).unwrap();
         assert!(!s.is_empty());
+    }
+
+    #[test]
+    fn test_shadow_pilot_arg_parsing_with_json_flag() {
+        let test_file = [
+            "examples/datasets/openreview_heldout_backtest.json",
+            "../../examples/datasets/openreview_heldout_backtest.json",
+        ]
+        .iter()
+        .find(|p| std::path::Path::new(p).exists())
+        .expect("test dataset fixture should exist");
+
+        let args = vec![
+            "--json".to_string(),
+            "--mode".to_string(),
+            "simulate".to_string(),
+            "--budget".to_string(),
+            "10".to_string(),
+            "--file".to_string(),
+            test_file.to_string(),
+        ];
+        let res = run_shadow_pilot(&args);
+        assert!(res.is_ok());
+        let output = res.unwrap();
+        assert!(output.starts_with('{'));
     }
 }

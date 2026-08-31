@@ -288,31 +288,43 @@ pub fn run_heldout_backtest(args: &[String]) -> Result<String, String> {
     while idx < args.len() {
         let val = args.get(idx + 1);
         match args[idx].as_str() {
-            "--file" | "-f" => file = val.cloned(),
-            "--output" | "-o" => output = val.cloned(),
+            "--file" | "-f" => {
+                file = val.cloned();
+                idx += 2;
+            }
+            "--output" | "-o" => {
+                output = val.cloned();
+                idx += 2;
+            }
             "--budget" | "-k" => {
                 if let Some(v) = val {
                     budget = v.parse().unwrap_or(50);
                 }
+                idx += 2;
             }
             "--boundary" | "-b" => {
                 if let Some(v) = val {
                     boundary = v.parse().unwrap_or(6.0);
                 }
+                idx += 2;
             }
             "--split" => {
                 if let Some(v) = val {
                     target_split = v.clone();
                 }
+                idx += 2;
             }
-            "--json" => json_out = true,
+            "--json" => {
+                json_out = true;
+                idx += 1;
+            }
             unknown => {
                 if unknown.starts_with("--") {
                     return Err(format!("unknown option `{unknown}`"));
                 }
+                idx += 1;
             }
         }
-        idx += 2;
     }
 
     let file_path = match file {
@@ -321,6 +333,7 @@ pub fn run_heldout_backtest(args: &[String]) -> Result<String, String> {
             let defaults = [
                 "examples/datasets/openreview_heldout_backtest.json",
                 "data/normalized/openreview_normalized.json",
+                "../../examples/datasets/openreview_heldout_backtest.json",
             ];
             defaults
                 .iter()
@@ -737,5 +750,30 @@ mod tests {
         ];
         let (low, high) = paired_bootstrap_ci(&aetre, &baseline, &labels, &groups, 2, 200);
         assert!(high >= low);
+    }
+
+    #[test]
+    fn test_backtest_arg_parsing_with_json_flag() {
+        let test_file = [
+            "examples/datasets/openreview_heldout_backtest.json",
+            "../../examples/datasets/openreview_heldout_backtest.json",
+        ]
+        .iter()
+        .find(|p| std::path::Path::new(p).exists())
+        .expect("test dataset fixture should exist");
+
+        let args = vec![
+            "--json".to_string(),
+            "--budget".to_string(),
+            "10".to_string(),
+            "--boundary".to_string(),
+            "5.5".to_string(),
+            "--file".to_string(),
+            test_file.to_string(),
+        ];
+        let res = run_heldout_backtest(&args);
+        assert!(res.is_ok());
+        let output = res.unwrap();
+        assert!(output.starts_with('{'));
     }
 }

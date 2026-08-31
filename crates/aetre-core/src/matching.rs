@@ -75,10 +75,11 @@ pub fn optimize_congestion_matching(
                     raw_affinity += 0.8 * (intersection as f64 / union as f64);
                 }
 
-                // Kingman utilization projection
-                let new_arrivals = r.arrival_rate + (load as f64);
+                // Kingman utilization projection: increment arrival rate by new assignment candidate
+                let newly_assigned = load.saturating_sub(r.current_load);
+                let projected_arrivals = r.arrival_rate + (newly_assigned + 1) as f64;
                 let service = r.service_rate.max(1.0);
-                let projected_rho = new_arrivals / service;
+                let projected_rho = projected_arrivals / service;
 
                 // Congestion penalty if utilization approaches target_rho
                 let congestion_penalty = if projected_rho > target_rho {
@@ -128,7 +129,8 @@ pub fn optimize_congestion_matching(
         let assigned = *current_assigned.get(&r.id).unwrap_or(&0);
         let service = r.service_rate.max(1.0);
         let pre_rho = r.arrival_rate / service;
-        let post_rho = (r.arrival_rate + assigned as f64) / service;
+        let newly_assigned = assigned.saturating_sub(r.current_load);
+        let post_rho = (r.arrival_rate + newly_assigned as f64) / service;
         let is_over = post_rho > target_rho || assigned >= r.capacity;
 
         if post_rho > target_rho {
