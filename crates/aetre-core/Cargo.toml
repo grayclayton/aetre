@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Core mathematical algorithms and queueing engine for AETRE"
+repository.workspace = true
+keywords = ["decision-theory", "queueing", "bayesian", "triage", "voi"]
+categories = ["algorithms", "science", "mathematics"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
