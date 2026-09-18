@@ -180,7 +180,7 @@ AETRE provides a high-performance native JSON-RPC 2.0 Model Context Protocol (MC
 
 ### Configuration (Claude Desktop / Cursor)
 
-Install the binary (`cargo install --git https://github.com/grayclayton/aetre.git aetre-mcp`),
+Install the binary (`cargo install aetre-mcp`),
 then add to your `claude_desktop_config.json`. The server speaks stdio by default:
 
 ```json
