@@ -1,0 +1,371 @@
+[
+  {
+    "candidate_id": "PR-101",
+    "repo": "django/django",
+    "issue_id": "issue-14050",
+    "title": "Fix Q() objects deconstruction with empty children",
+    "patch_code": "def fix_q(children):\n    return [c for c in children if c is not None]\n",
+    "reference_code": "def fix_q(children):\n    return [c for c in children if c is not None]\n",
+    "expected_utility": 0.045,
+    "probes": [
+      {
+        "name": "t1_filter",
+        "input": {
+          "children": [
+            1,
+            null,
+            2
+          ]
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_empty",
+        "input": {
+          "children": [
+            null,
+            null
+          ]
+        },
+        "tier": 2
+      },
+      {
+        "name": "t3_full",
+        "input": {
+          "children": [
+            3,
+            4,
+            5
+          ]
+        },
+        "tier": 3
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-102",
+    "repo": "sympy/sympy",
+    "issue_id": "issue-18198",
+    "title": "Handle zero power in polynomial evaluate",
+    "patch_code": "def poly_eval(coeff, power):\n    if power == 0:\n        return 1\n    return coeff ** power\n",
+    "reference_code": "def poly_eval(coeff, power):\n    if power == 0:\n        return 1\n    return coeff ** power\n",
+    "expected_utility": 0.038,
+    "probes": [
+      {
+        "name": "t1_zero_pow",
+        "input": {
+          "coeff": 5,
+          "power": 0
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_pos_pow",
+        "input": {
+          "coeff": 3,
+          "power": 2
+        },
+        "tier": 2
+      },
+      {
+        "name": "t3_unit_pow",
+        "input": {
+          "coeff": 7,
+          "power": 1
+        },
+        "tier": 3
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-103",
+    "repo": "pallets/flask",
+    "issue_id": "issue-4122",
+    "title": "Strip port in host matching when SERVER_NAME is set",
+    "patch_code": "def match_host(host):\n    return host.split(':')[0].lower()\n",
+    "reference_code": "def match_host(host):\n    return host.split(':')[0].lower()\n",
+    "expected_utility": 0.032,
+    "probes": [
+      {
+        "name": "t1_port",
+        "input": {
+          "host": "localhost:5000"
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_noport",
+        "input": {
+          "host": "EXAMPLE.COM"
+        },
+        "tier": 2
+      },
+      {
+        "name": "t3_subdomain",
+        "input": {
+          "host": "api.test.io:8080"
+        },
+        "tier": 3
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-104",
+    "repo": "psf/requests",
+    "issue_id": "issue-5210",
+    "title": "Normalize headers to lowercase byte string",
+    "patch_code": "def norm_hdr(k, v):\n    return (k.lower().strip(), v.strip())\n",
+    "reference_code": "def norm_hdr(k, v):\n    return (k.lower().strip(), v.strip())\n",
+    "expected_utility": 0.028,
+    "probes": [
+      {
+        "name": "t1_hdr",
+        "input": {
+          "k": " Content-Type ",
+          "v": " application/json "
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_case",
+        "input": {
+          "k": "AUTHORIZATION",
+          "v": "Bearer xyz"
+        },
+        "tier": 2
+      },
+      {
+        "name": "t3_empty",
+        "input": {
+          "k": "x",
+          "v": "y"
+        },
+        "tier": 3
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-105",
+    "repo": "scikit-learn/scikit-learn",
+    "issue_id": "issue-20412",
+    "title": "Support n_features_in_ attribute validation",
+    "patch_code": "def check_features(n_in, n_exp):\n    return n_in == n_exp\n",
+    "reference_code": "def check_features(n_in, n_exp):\n    return n_in == n_exp\n",
+    "expected_utility": 0.025,
+    "probes": [
+      {
+        "name": "t1_match",
+        "input": {
+          "n_in": 10,
+          "n_exp": 10
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_mismatch",
+        "input": {
+          "n_in": 5,
+          "n_exp": 8
+        },
+        "tier": 2
+      },
+      {
+        "name": "t3_zero",
+        "input": {
+          "n_in": 0,
+          "n_exp": 0
+        },
+        "tier": 3
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-106",
+    "repo": "django/django",
+    "issue_id": "issue-14051",
+    "title": "Refactor model save kwargs handling",
+    "patch_code": "def save_kwargs(kw)\n    return kw.copy()",
+    "reference_code": "def save_kwargs(kw):\n    return kw.copy()"
+  },
+  {
+    "candidate_id": "PR-107",
+    "repo": "sympy/sympy",
+    "issue_id": "issue-18200",
+    "title": "Add complex conjugate simplification",
+    "patch_code": "def conjugate(expr):\n    if (expr is None return None\n    return expr",
+    "reference_code": "def conjugate(expr):\n    if expr is None: return None\n    return expr"
+  },
+  {
+    "candidate_id": "PR-108",
+    "repo": "pallets/flask",
+    "issue_id": "issue-4125",
+    "title": "Clean route prefix decorator",
+    "patch_code": "def route_prefix(p):\n  return\n   p.rstrip('/')",
+    "reference_code": "def route_prefix(p):\n    return p.rstrip('/')"
+  },
+  {
+    "candidate_id": "PR-109",
+    "repo": "psf/requests",
+    "issue_id": "issue-5215",
+    "title": "Handle chunked upload encoding",
+    "patch_code": "def chunk_encode(data):\n    return len(data) // len(data)\n",
+    "reference_code": "def chunk_encode(data):\n    return 1 if len(data) > 0 else 0\n",
+    "probes": [
+      {
+        "name": "t1_empty_chunk",
+        "input": {
+          "data": ""
+        },
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-110",
+    "repo": "scikit-learn/scikit-learn",
+    "issue_id": "issue-20415",
+    "title": "Initialize clustering centroids with random seed",
+    "patch_code": "def init_centroids(k):\n    raise ValueError('unsupported clustering k')\n",
+    "reference_code": "def init_centroids(k):\n    return list(range(k))\n",
+    "probes": [
+      {
+        "name": "t1_centroids",
+        "input": {
+          "k": 3
+        },
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-111",
+    "repo": "django/django",
+    "issue_id": "issue-14055",
+    "title": "Safe query ordering string validation",
+    "patch_code": "def order_by_clause(f):\n    return f.upper() if f else None\n",
+    "reference_code": "def order_by_clause(f):\n    return f.lower() if f else ''\n",
+    "probes": [
+      {
+        "name": "t1_order",
+        "input": {
+          "f": "id"
+        },
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-112",
+    "repo": "sympy/sympy",
+    "issue_id": "issue-18210",
+    "title": "Strict degree comparison for univariate polynomials",
+    "patch_code": "def is_higher_degree(d1, d2):\n    return d1 >= d2\n",
+    "reference_code": "def is_higher_degree(d1, d2):\n    return d1 > d2\n",
+    "probes": [
+      {
+        "name": "t1_smoke_higher",
+        "input": {
+          "d1": 5,
+          "d2": 2
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_boundary_equal",
+        "input": {
+          "d1": 3,
+          "d2": 3
+        },
+        "tier": 2
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-113",
+    "repo": "pallets/flask",
+    "issue_id": "issue-4130",
+    "title": "Cookie max age calculation with boundary offset",
+    "patch_code": "def cookie_expiry(secs):\n    return secs - 1 if secs > 0 else 0\n",
+    "reference_code": "def cookie_expiry(secs):\n    return secs if secs > 0 else 0\n",
+    "probes": [
+      {
+        "name": "t1_smoke_zero",
+        "input": {
+          "secs": 0
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_boundary_hour",
+        "input": {
+          "secs": 3600
+        },
+        "tier": 2
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-114",
+    "repo": "psf/requests",
+    "issue_id": "issue-5220",
+    "title": "Minor docstring formatting in auth module",
+    "patch_code": "def auth_header(tok):\n    return f'Bearer {tok}'\n",
+    "reference_code": "def auth_header(tok):\n    return f'Bearer {tok}'\n",
+    "expected_utility": 0.005,
+    "probes": [
+      {
+        "name": "t1_auth",
+        "input": {
+          "tok": "abc"
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_auth",
+        "input": {
+          "tok": "xyz123"
+        },
+        "tier": 2
+      },
+      {
+        "name": "t3_auth",
+        "input": {
+          "tok": "secret"
+        },
+        "tier": 3
+      }
+    ]
+  },
+  {
+    "candidate_id": "PR-115",
+    "repo": "scikit-learn/scikit-learn",
+    "issue_id": "issue-20420",
+    "title": "Add alias parameter for legacy deprecation",
+    "patch_code": "def alias_param(p):\n    return p\n",
+    "reference_code": "def alias_param(p):\n    return p\n",
+    "expected_utility": 0.003,
+    "probes": [
+      {
+        "name": "t1_param",
+        "input": {
+          "p": "estimator"
+        },
+        "tier": 1
+      },
+      {
+        "name": "t2_param",
+        "input": {
+          "p": "n_iter"
+        },
+        "tier": 2
+      },
+      {
+        "name": "t3_param",
+        "input": {
+          "p": "tol"
+        },
+        "tier": 3
+      }
+    ]
+  }
+]

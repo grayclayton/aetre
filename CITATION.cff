@@ -1,11 +1,11 @@
 cff-version: 1.2.0
 message: "If you use this software in academic or industrial research, please cite both the software engine and the theoretical working paper."
-title: "AETRE: Adaptive Epistemic Triage & Recall Engine"
-abstract: "A high-performance mathematical operations research and Bayesian Value-of-Information (VOI) engine designed to optimize review resource allocation, prevent congestion collapse, and eliminate selection bias under AI proposal floods."
+title: "AETRE & The Governed Agent: Unified Decision-Theoretic Operating System"
+abstract: "A high-performance operations-research and Bayesian decision-theoretic engine uniting macroeconomic proposal/portfolio triage (AETRE: Kingman capacity, Pareto VOI, quadratic staking) and microeconomic execution governance (Governed Agent: Road A fail-closed verification gate, Bayesian Bellman stopping lattices, Tripartite Review Boundary, and c-mu rule Knapsack admission)."
 authors:
   - family-names: "Gray"
     given-names: "Clayton"
-version: "0.1.0"
+version: "0.2.0"
 doi: "10.5281/zenodo.22098366"
 date-released: "2026-08-25"
 license: "AGPL-3.0-or-later"
@@ -19,6 +19,11 @@ keywords:
   - "kingman heavy traffic"
   - "pareto distributions"
   - "venture capital dealflow"
+  - "autonomous coding agents"
+  - "fail-closed verification gate"
+  - "bellman dynamic programming"
+  - "knapsack admission control"
+  - "c-mu rule"
   - "model context protocol"
   - "rust"
 references:
@@ -30,3 +35,12 @@ references:
     year: 2026
     url: "https://ssrn.com/abstract=7161458"
     institution: "SSRN Working Paper Series"
+  - type: article
+    authors:
+      - family-names: "Gray"
+        given-names: "Clayton"
+    title: "The Admission Frontier: An Economically Regulated Decision-Theoretic Runtime and Fail-Closed Verification Gate for Autonomous Agents"
+    year: 2026
+    doi: "10.5281/zenodo.22814799"
+    institution: "Zenodo / SSRN Working Paper Series"
+

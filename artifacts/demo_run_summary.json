@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-09-18 15:29:11",
+  "scenarios": {
+    "scenario_a": {
+      "candidate_id": "PR-001-SyntaxErr",
+      "terminal_tier": 0,
+      "passed": false,
+      "total_cost": 0.0,
+      "decision": "HALT_AND_REJECT",
+      "diagnostic": "Tier 0 SyntaxError: expected ':' (<unknown>, line 2)"
+    },
+    "scenario_b": {
+      "candidate_id": "PR-002-CrudeBug",
+      "terminal_tier": 1,
+      "passed": false,
+      "total_cost": 0.0001,
+      "decision": "HALT_AND_REJECT"
+    },
+    "scenario_c": {
+      "candidate_id": "PR-003-SubtleDefect",
+      "terminal_tier": 2,
+      "mutation_score": 0.6666666666666666,
+      "passed": false,
+      "total_cost": 0.0006000000000000001,
+      "decision": "HALT_AND_REJECT"
+    },
+    "scenario_d": {
+      "candidate_id": "PR-004-Conforming",
+      "terminal_tier": 2,
+      "passed": true,
+      "final_belief": 0.8935489756135082,
+      "branch_coverage_pct": 0.7,
+      "state_entropy": 3.588354347173234,
+      "total_cost": 0.0016,
+      "decision": "HALT_AND_COMMIT"
+    },
+    "scenario_e": {
+      "capacity_K": 2.0,
+      "optimal_depth_m": 2,
+      "total_admitted": 2,
+      "admitted_ids": [
+        "PR-004-Conforming",
+        "PR-005-SemverOpt"
+      ],
+      "rejected_ids": [
+        "PR-006-TopSort",
+        "PR-003-SubtleDefect"
+      ],
+      "shadow_price": 0.0019999999999999983
+    }
+  },
+  "road_a_summary": {
+    "naive_full_ci_cost_usd": 8.0,
+    "governed_agent_cost_usd": 0.0023,
+    "cost_savings_pct": 99.97,
+    "docker_runs_avoided": 3,
+    "docker_runs_avoided_pct": 75.0,
+    "docker_invoked": 1
+  }
+}

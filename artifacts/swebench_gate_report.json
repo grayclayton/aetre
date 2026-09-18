@@ -1,0 +1,126 @@
+{
+  "benchmark_id": "swebench-15pr-gatekeeper",
+  "timestamp_iso": "2026-09-18T11:58:29Z",
+  "rust_native_core_active": true,
+  "live_docker_sandbox_active": false,
+  "total_incoming_prs": 15,
+  "queue_capacity_K": 3,
+  "elapsed_ms": 4.1,
+  "funnel": {
+    "total_incoming_candidates": 15,
+    "tier_0_syntax_screened": 3,
+    "tier_1_crude_bug_screened": 3,
+    "tier_2_mutation_screened": 2,
+    "tier_3_screened": 0,
+    "tier_3_qualified": 7,
+    "knapsack_admitted": 3,
+    "knapsack_deprioritized": 4
+  },
+  "economics": {
+    "total_governed_cost_usd": 0.0197,
+    "naive_full_ci_cost_usd": 30.0,
+    "cost_savings_usd": 29.98,
+    "cost_savings_pct": 99.93,
+    "docker_invocations_avoided": 8,
+    "docker_invocations_avoided_pct": 53.33,
+    "capacity_shadow_price_lambda": 0.028,
+    "total_welfare_w": 0.115
+  },
+  "admitted_pull_requests": [
+    {
+      "candidate_id": "PR-101",
+      "repo": "django/django",
+      "issue_id": "issue-14050",
+      "title": "Fix Q() objects deconstruction with empty children",
+      "expected_utility": 0.045
+    },
+    {
+      "candidate_id": "PR-102",
+      "repo": "sympy/sympy",
+      "issue_id": "issue-18198",
+      "title": "Handle zero power in polynomial evaluate",
+      "expected_utility": 0.038
+    },
+    {
+      "candidate_id": "PR-103",
+      "repo": "pallets/flask",
+      "issue_id": "issue-4122",
+      "title": "Strip port in host matching when SERVER_NAME is set",
+      "expected_utility": 0.032
+    }
+  ],
+  "screened_pull_requests": [
+    {
+      "candidate_id": "PR-106",
+      "terminal_tier": 0,
+      "cost": 0.0,
+      "reason": "Tier 0 SyntaxError: expected ':' (<unknown>, line 1)",
+      "title": "Refactor model save kwargs handling",
+      "repo": "django/django",
+      "expected_utility": 0.02
+    },
+    {
+      "candidate_id": "PR-107",
+      "terminal_tier": 0,
+      "cost": 0.0,
+      "reason": "Tier 0 SyntaxError: invalid syntax (<unknown>, line 2)",
+      "title": "Add complex conjugate simplification",
+      "repo": "sympy/sympy",
+      "expected_utility": 0.02
+    },
+    {
+      "candidate_id": "PR-108",
+      "terminal_tier": 0,
+      "cost": 0.0,
+      "reason": "Tier 0 SyntaxError: unexpected indent (<unknown>, line 3)",
+      "title": "Clean route prefix decorator",
+      "repo": "pallets/flask",
+      "expected_utility": 0.02
+    },
+    {
+      "candidate_id": "PR-109",
+      "terminal_tier": 1,
+      "cost": 0.0001,
+      "reason": "Tier 1 Failure in t1_empty_chunk: Exception: ZeroDivisionError: integer division or modulo by zero",
+      "title": "Handle chunked upload encoding",
+      "repo": "psf/requests",
+      "expected_utility": 0.02
+    },
+    {
+      "candidate_id": "PR-110",
+      "terminal_tier": 1,
+      "cost": 0.0001,
+      "reason": "Tier 1 Failure in t1_centroids: Exception: ValueError: unsupported clustering k",
+      "title": "Initialize clustering centroids with random seed",
+      "repo": "scikit-learn/scikit-learn",
+      "expected_utility": 0.02
+    },
+    {
+      "candidate_id": "PR-111",
+      "terminal_tier": 1,
+      "cost": 0.0001,
+      "reason": "Tier 1 Failure in t1_order: Mismatch: 'ID' != 'id'",
+      "title": "Safe query ordering string validation",
+      "repo": "django/django",
+      "expected_utility": 0.02
+    },
+    {
+      "candidate_id": "PR-112",
+      "terminal_tier": 2,
+      "cost": 0.0006000000000000001,
+      "reason": "Tier 2 Failure in t2_boundary_equal: Mismatch: True != False",
+      "title": "Strict degree comparison for univariate polynomials",
+      "repo": "sympy/sympy",
+      "expected_utility": 0.02
+    },
+    {
+      "candidate_id": "PR-113",
+      "terminal_tier": 2,
+      "cost": 0.0006000000000000001,
+      "reason": "Tier 2 Failure in t2_boundary_hour: Mismatch: 3599 != 3600",
+      "title": "Cookie max age calculation with boundary offset",
+      "repo": "pallets/flask",
+      "expected_utility": 0.02
+    }
+  ]
+}

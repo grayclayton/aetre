@@ -1,0 +1,146 @@
+name: Road A Gatekeeper (Pre-Flight Filter)
+
+# ==============================================================================
+# Road A Tiered Verification Gate Template
+# ==============================================================================
+# Drop-in CI workflow for repositories receiving pull requests from autonomous
+# coding agents (Claude Engineer, Devin, SWE-agent, AutoGPT) or human contributors.
+#
+# ARCHITECTURE:
+#   1. Stage 1 (road-a-gatekeeper): Runs on host in ~10s ($0.0000 - $0.0001).
+#      Screen Tier 0 (AST Syntax) and Tier 1 (Bytecode compilation/invariants).
+#      Fails closed and blocks container provisioning if syntax errors are found.
+#   2. Stage 2 (heavy-integration-ci): Runs full test matrix or Docker containers
+#      ONLY if Stage 1 passes. Avoids 100% of container spend on malformed PRs.
+#
+# USAGE IN YOUR REPOSITORY:
+#   To enable automatic PR screening in your repository:
+#   1. Copy this file to .github/workflows/governed-gate.yml
+#   2. Uncomment the 'pull_request' trigger below.
+# ==============================================================================
+
+on:
+  # To enable automatic PR screening, uncomment the following block:
+  # pull_request:
+  #   branches: [ main, master, develop ]
+  #   paths:
+  #     - '**.py'
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Target base branch to compare against"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  road-a-gatekeeper:
+    name: Road A Pre-Flight Gatekeeper
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Identify changed Python files
+        id: changed-files
+        run: |
+          TARGET_BRANCH="${{ github.base_ref || github.event.inputs.target_branch || 'main' }}"
+          echo "Comparing against target branch: origin/$TARGET_BRANCH"
+          
+          # Fetch target branch if not present
+          git fetch origin "$TARGET_BRANCH" --depth=1 || true
+          
+          # Get list of added, copied, or modified Python files
+          CHANGED_PY=$(git diff --name-only --diff-filter=ACM "origin/$TARGET_BRANCH"...HEAD | grep -E '\.py$' || true)
+          
+          if [ -z "$CHANGED_PY" ]; then
+            echo "No Python files modified in this changeset."
+            echo "has_py_files=false" >> $GITHUB_OUTPUT
+          else
+            echo "Modified Python files found:"
+            echo "$CHANGED_PY"
+            echo "has_py_files=true" >> $GITHUB_OUTPUT
+            # Store newline-delimited list to file for safe argument passing
+            echo "$CHANGED_PY" > /tmp/changed_python_files.txt
+          fi
+
+      - name: Run Road A Tier 0/1 Screening
+        if: steps.changed-files.outputs.has_py_files == 'true'
+        run: |
+          # Read file list into arguments
+          mapfile -t FILES < /tmp/changed_python_files.txt
+          
+          echo "Executing Road A Pre-Commit Gatekeeper..."
+          python scripts/pre-commit-governed-gate.py "${FILES[@]}" --json > /tmp/gate_receipt.json || GATE_FAILED=1
+          
+          # Pretty print output in logs
+          cat /tmp/gate_receipt.json
+          
+          # Populate GitHub Actions Step Summary
+          python -c "
+          import json, os
+          with open('/tmp/gate_receipt.json') as f:
+              data = json.load(f)
+          
+          summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
+          if not summary_path:
+              exit(0)
+          
+          with open(summary_path, 'a') as s:
+              s.write('## 🛡️ Road A Tiered Verification Gate Receipt\n\n')
+              status_badge = '✅ **PASSED**' if data.get('passed') else '❌ **HALT AND REJECT**'
+              s.write(f'**Status**: {status_badge}\n')
+              s.write(f'- **Files Screened**: {data.get(\"files_screened\", 0)}\n')
+              s.write(f'- **Tier 0 Syntax Errors**: {data.get(\"tier_0_syntax_errors\", 0)}\n')
+              s.write(f'- **Tier 1 Compilation Errors**: {data.get(\"tier_1_compilation_errors\", 0)}\n')
+              s.write(f'- **Host Screening Latency**: {data.get(\"total_latency_ms\", 0):.2f} ms\n')
+              s.write(f'- **Docker Containers Avoided**: {data.get(\"docker_containers_avoided\", 0)}\n')
+              s.write(f'- **Estimated Compute Savings**: \${data.get(\"estimated_savings_usd\", 0):.4f} USD\n\n')
+              
+              failures = data.get('failures', [])
+              if failures:
+                  s.write('### ⚠️ Detected Host Defects (Container Escalation Bypassed)\n\n')
+                  s.write('| File | Tier | Error Type | Location | Detail |\n')
+                  s.write('|---|---|---|---|---|\n')
+                  for f in failures:
+                      loc = f'Line {f.get(\"lineno\", \"?\")}'
+                      if f.get('col_offset'): loc += f', Col {f[\"col_offset\"]}'
+                      s.write(f'| \`{f.get(\"file\")}\` | Tier {f.get(\"terminal_tier\")} | \`{f.get(\"error_type\")}\` | {loc} | {f.get(\"diagnostic\")} |\n')
+                  s.write('\n> **Notice**: This pull request was rejected at the host pre-check gate. Containerized CI runners were not provisioned.\n')
+              else:
+                  s.write('### ✅ All Pre-Flight Invariants Satisfied\nPull request is qualified to proceed to heavy integration testing.\n')
+          "
+          
+          if [ "$GATE_FAILED" = "1" ]; then
+            echo "::error::Road A pre-flight verification gate rejected this changeset. See summary for details."
+            exit 1
+          fi
+
+  heavy-integration-ci:
+    name: Heavy Integration CI (Docker & Full Matrix)
+    needs: [road-a-gatekeeper]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Full Test Matrix / Sandbox Execution
+        run: |
+          echo "Road A pre-flight gate passed successfully!"
+          echo "Proceeding with expensive test matrix and containerized workflows..."
+          # Example: pytest, cargo test, docker build, etc.

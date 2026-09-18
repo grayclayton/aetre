@@ -1,0 +1,7 @@
+- id: governed-agent-gate
+  name: Governed Agent Road A Gatekeeper
+  description: Fail-closed pre-commit verification gate screening code submissions on the host (Tier 0 AST syntax & Tier 1 compilation/invariants) to eliminate malformed agent commits before CI container escalation.
+  entry: python scripts/pre-commit-governed-gate.py
+  language: python
+  types: [python]
+  require_serial: true

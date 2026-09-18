@@ -1,0 +1,41 @@
+[
+  {
+    "id": "NIH-R01-CA294810",
+    "domain": "Oncology & Molecular Biology",
+    "title": "Epigenetic Reprogramming of Refractory Glioblastoma via Synthetic microRNA Nanoparticles",
+    "principal_investigator": "Dr. Sarah Jenkins (Johns Hopkins)",
+    "requested_budget_usd": 1850000,
+    "initial_priority_percentile": 14.5,
+    "unconventional_risk_score": 0.88,
+    "epistemic_variance": 0.82,
+    "historical_funding_outcome": "Funded",
+    "target_test_focus": "High-Risk Exploration Allocation",
+    "abstract": "Proposes a non-standard direct epigenetic silencing method for treatment-resistant brain tumors. High initial panel disagreement between conservative oncologists and synthetic biologists. Ideal test candidate for the 5% exploration audit and VOI allocation."
+  },
+  {
+    "id": "NIH-R01-AI198422",
+    "domain": "Infectious Diseases & Immunology",
+    "title": "High-Throughput Recombinant Antigen Screening for Broad-Spectrum Coronaviruses",
+    "principal_investigator": "Dr. Marcus Thorne (Scripps)",
+    "requested_budget_usd": 1200000,
+    "initial_priority_percentile": 8.0,
+    "unconventional_risk_score": 0.25,
+    "epistemic_variance": 0.12,
+    "historical_funding_outcome": "Funded",
+    "target_test_focus": "Fast-Pass Established Methodology",
+    "abstract": "Standard multi-epitope assay using established laboratory robotics. Highly predictable outcomes, low variance, top 8th percentile priority. Fast-passed without redundant review triage."
+  },
+  {
+    "id": "NIH-R21-EB034891",
+    "domain": "Biomedical Imaging & Nanotechnology",
+    "title": "Room-Temperature Optically Pumped Magnetometry for Non-Invasive Cardiac Mapping",
+    "principal_investigator": "Dr. Kenji Sato (MIT)",
+    "requested_budget_usd": 450000,
+    "initial_priority_percentile": 22.0,
+    "unconventional_risk_score": 0.94,
+    "epistemic_variance": 0.91,
+    "historical_funding_outcome": "Unfunded (Later Led to Major Clinical Spinout)",
+    "target_test_focus": "Selective-Label Censoring Recovery",
+    "abstract": "Just missed the standard payline (22nd percentile vs 16th cutoff) due to high initial skepticism regarding magnetic shielding noise. Testing how randomized exploration audits (H_hat_D) capture overlooked breakthroughs."
+  }
+]

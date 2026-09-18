@@ -1,0 +1,297 @@
+{
+  "benchmark_metadata": {
+    "version": "1.0.0",
+    "date": "2026-09-15",
+    "stakes": {
+      "reward": 0.02,
+      "loss": 0.1,
+      "ratio": 5.0,
+      "p_star": 0.833333
+    },
+    "datasets_evaluated": [
+      "OpenReview",
+      "NIH Grants",
+      "USPTO Patents"
+    ]
+  },
+  "datasets": {
+    "openreview": {
+      "dataset_name": "openreview",
+      "total_candidates_N": 4,
+      "capacity_K": 2,
+      "ground_truth_high_value_H_N": 3,
+      "prop1_theoretical_recall_ceiling": 0.6667,
+      "is_capacity_constrained": true,
+      "policies": {
+        "naive_fifo": {
+          "policy_name": "Naive FIFO (Unregulated Order)",
+          "admitted_ids": [
+            "OPENREVIEW-ICLR-2025-01",
+            "OPENREVIEW-ICLR-2025-02"
+          ],
+          "admitted_count": 2,
+          "rejected_count": 2,
+          "total_welfare": -0.056,
+          "high_value_recall": 0.3333,
+          "precision": 0.5,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": 99.0,
+          "shadow_price_lambda": 0.0
+        },
+        "static_threshold": {
+          "policy_name": "Static Threshold (Cutoff p* = 0.83)",
+          "admitted_ids": [
+            "OPENREVIEW-ICLR-2025-03"
+          ],
+          "admitted_count": 1,
+          "rejected_count": 3,
+          "total_welfare": 0.005,
+          "high_value_recall": 0.3333,
+          "precision": 1.0,
+          "capacity_utilization_rho": 0.5,
+          "estimated_queue_delay_proxy": 1.0,
+          "shadow_price_lambda": 0.0
+        },
+        "pillar5_knapsack": {
+          "policy_name": "Pillar V Knapsack Regulation (K = 2)",
+          "admitted_ids": [
+            "OPENREVIEW-ICLR-2025-03"
+          ],
+          "admitted_count": 1,
+          "rejected_count": 3,
+          "total_welfare": 0.005,
+          "high_value_recall": 0.3333,
+          "precision": 1.0,
+          "capacity_utilization_rho": 0.5,
+          "estimated_queue_delay_proxy": 1.0,
+          "shadow_price_lambda": 0.0
+        },
+        "bayesian_voi_triage": {
+          "policy_name": "Bayesian VOI Epistemic Triage (3-Stream)",
+          "admitted_ids": [
+            "OPENREVIEW-ICLR-2025-03",
+            "OPENREVIEW-ICLR-2025-01"
+          ],
+          "admitted_count": 2,
+          "rejected_count": 2,
+          "total_welfare": -0.014,
+          "high_value_recall": 0.6667,
+          "precision": 1.0,
+          "capacity_utilization_rho": 0.5,
+          "estimated_queue_delay_proxy": 1.0,
+          "shadow_price_lambda": 0.0
+        }
+      }
+    },
+    "nih": {
+      "dataset_name": "nih",
+      "total_candidates_N": 3,
+      "capacity_K": 2,
+      "ground_truth_high_value_H_N": 3,
+      "prop1_theoretical_recall_ceiling": 0.6667,
+      "is_capacity_constrained": true,
+      "policies": {
+        "naive_fifo": {
+          "policy_name": "Naive FIFO (Unregulated Order)",
+          "admitted_ids": [
+            "NIH-R01-CA294810",
+            "NIH-R01-AI198422"
+          ],
+          "admitted_count": 2,
+          "rejected_count": 1,
+          "total_welfare": 0.013,
+          "high_value_recall": 0.6667,
+          "precision": 1.0,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": 99.0,
+          "shadow_price_lambda": 0.0
+        },
+        "static_threshold": {
+          "policy_name": "Static Threshold (Cutoff p* = 0.83)",
+          "admitted_ids": [
+            "NIH-R01-CA294810",
+            "NIH-R01-AI198422"
+          ],
+          "admitted_count": 2,
+          "rejected_count": 1,
+          "total_welfare": 0.013,
+          "high_value_recall": 0.6667,
+          "precision": 1.0,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": Infinity,
+          "shadow_price_lambda": 0.0
+        },
+        "pillar5_knapsack": {
+          "policy_name": "Pillar V Knapsack Regulation (K = 2)",
+          "admitted_ids": [
+            "NIH-R01-AI198422",
+            "NIH-R01-CA294810"
+          ],
+          "admitted_count": 2,
+          "rejected_count": 1,
+          "total_welfare": 0.013,
+          "high_value_recall": 0.6667,
+          "precision": 1.0,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": 19.0,
+          "shadow_price_lambda": 0.0
+        },
+        "bayesian_voi_triage": {
+          "policy_name": "Bayesian VOI Epistemic Triage (3-Stream)",
+          "admitted_ids": [
+            "NIH-R01-AI198422",
+            "NIH-R01-CA294810"
+          ],
+          "admitted_count": 2,
+          "rejected_count": 1,
+          "total_welfare": 0.013,
+          "high_value_recall": 0.6667,
+          "precision": 1.0,
+          "capacity_utilization_rho": 0.5,
+          "estimated_queue_delay_proxy": 1.0,
+          "shadow_price_lambda": 0.034108
+        }
+      }
+    },
+    "uspto": {
+      "dataset_name": "uspto",
+      "total_candidates_N": 2,
+      "capacity_K": 1,
+      "ground_truth_high_value_H_N": 1,
+      "prop1_theoretical_recall_ceiling": 1.0,
+      "is_capacity_constrained": false,
+      "policies": {
+        "naive_fifo": {
+          "policy_name": "Naive FIFO (Unregulated Order)",
+          "admitted_ids": [
+            "US-PAT-APP-18/921,440"
+          ],
+          "admitted_count": 1,
+          "rejected_count": 1,
+          "total_welfare": 0.0056,
+          "high_value_recall": 1.0,
+          "precision": 1.0,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": 99.0,
+          "shadow_price_lambda": 0.0
+        },
+        "static_threshold": {
+          "policy_name": "Static Threshold (Cutoff p* = 0.83)",
+          "admitted_ids": [
+            "US-PAT-APP-18/921,440"
+          ],
+          "admitted_count": 1,
+          "rejected_count": 1,
+          "total_welfare": 0.0056,
+          "high_value_recall": 1.0,
+          "precision": 1.0,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": Infinity,
+          "shadow_price_lambda": 0.0
+        },
+        "pillar5_knapsack": {
+          "policy_name": "Pillar V Knapsack Regulation (K = 1)",
+          "admitted_ids": [
+            "US-PAT-APP-18/921,440"
+          ],
+          "admitted_count": 1,
+          "rejected_count": 1,
+          "total_welfare": 0.0056,
+          "high_value_recall": 1.0,
+          "precision": 1.0,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": 19.0,
+          "shadow_price_lambda": 0.0
+        },
+        "bayesian_voi_triage": {
+          "policy_name": "Bayesian VOI Epistemic Triage (3-Stream)",
+          "admitted_ids": [
+            "US-PAT-APP-18/921,440"
+          ],
+          "admitted_count": 1,
+          "rejected_count": 1,
+          "total_welfare": 0.0056,
+          "high_value_recall": 1.0,
+          "precision": 1.0,
+          "capacity_utilization_rho": 1.0,
+          "estimated_queue_delay_proxy": 19.0,
+          "shadow_price_lambda": 0.0
+        }
+      }
+    }
+  },
+  "shadow_price_escalation_curve": [
+    {
+      "arrival_volume_N": 5,
+      "capacity_K": 5,
+      "admitted_m_star": 1,
+      "latent_high_value_H_N": 1,
+      "total_welfare_W": 0.010429,
+      "shadow_price_lambda_K": 0.0,
+      "prop1_recall_ceiling": 1.0
+    },
+    {
+      "arrival_volume_N": 10,
+      "capacity_K": 5,
+      "admitted_m_star": 2,
+      "latent_high_value_H_N": 2,
+      "total_welfare_W": 0.019433,
+      "shadow_price_lambda_K": 0.0,
+      "prop1_recall_ceiling": 1.0
+    },
+    {
+      "arrival_volume_N": 25,
+      "capacity_K": 5,
+      "admitted_m_star": 2,
+      "latent_high_value_H_N": 2,
+      "total_welfare_W": 0.009461,
+      "shadow_price_lambda_K": 0.0,
+      "prop1_recall_ceiling": 1.0
+    },
+    {
+      "arrival_volume_N": 50,
+      "capacity_K": 5,
+      "admitted_m_star": 3,
+      "latent_high_value_H_N": 3,
+      "total_welfare_W": 0.005847,
+      "shadow_price_lambda_K": 0.0,
+      "prop1_recall_ceiling": 1.0
+    },
+    {
+      "arrival_volume_N": 100,
+      "capacity_K": 5,
+      "admitted_m_star": 5,
+      "latent_high_value_H_N": 10,
+      "total_welfare_W": 0.049904,
+      "shadow_price_lambda_K": 0.005221,
+      "prop1_recall_ceiling": 0.5
+    },
+    {
+      "arrival_volume_N": 250,
+      "capacity_K": 5,
+      "admitted_m_star": 5,
+      "latent_high_value_H_N": 19,
+      "total_welfare_W": 0.070655,
+      "shadow_price_lambda_K": 0.009906,
+      "prop1_recall_ceiling": 0.2632
+    },
+    {
+      "arrival_volume_N": 500,
+      "capacity_K": 5,
+      "admitted_m_star": 5,
+      "latent_high_value_H_N": 49,
+      "total_welfare_W": 0.084642,
+      "shadow_price_lambda_K": 0.014297,
+      "prop1_recall_ceiling": 0.102
+    },
+    {
+      "arrival_volume_N": 1000,
+      "capacity_K": 5,
+      "admitted_m_star": 5,
+      "latent_high_value_H_N": 87,
+      "total_welfare_W": 0.086851,
+      "shadow_price_lambda_K": 0.015502,
+      "prop1_recall_ceiling": 0.0575
+    }
+  ]
+}

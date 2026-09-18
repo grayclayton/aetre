@@ -1,0 +1,28 @@
+[
+  {
+    "id": "US-PAT-APP-18/921,440",
+    "domain": "Semiconductors & Solid-State Physics",
+    "title": "Gallium Nitride Heterojunction Power Inverter with Monolithic Gate Driver",
+    "assignee": "PowerSemics Global Inc.",
+    "cpc_class": "H01L 29/778",
+    "claims_count": 28,
+    "historical_pendency_months": 26.4,
+    "examiner_utilization_rho": 0.94,
+    "office_action_count": 3,
+    "target_test_focus": "Kingman Backlog & Saturation Throttle",
+    "abstract": "High-complexity semiconductor fabrication architecture. In an art unit with rho = 0.94, Kingman wait times exploded to over 2 years. Tests how automated preliminary prior-art citation checks reduce examiner service time (mu)."
+  },
+  {
+    "id": "US-PAT-APP-18/740,119",
+    "domain": "Artificial Intelligence & Natural Language",
+    "title": "System and Method for Recursive Chain-of-Thought Text Summarization",
+    "assignee": "Cognitive Cloud Technologies",
+    "cpc_class": "G06N 3/08",
+    "claims_count": 42,
+    "historical_pendency_months": 18.2,
+    "examiner_utilization_rho": 0.88,
+    "office_action_count": 2,
+    "target_test_focus": "Anti-Spam Staking & Eligibility Filter",
+    "abstract": "Generic recursive LLM prompt orchestration claims. High volume of overlapping 102/103 prior art. Tests submitter staking ($c_sub) to curb low-novelty patent claim floods."
+  }
+]

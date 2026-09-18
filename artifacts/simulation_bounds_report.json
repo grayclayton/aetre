@@ -1,0 +1,161 @@
+{
+  "total_candidates": 10000,
+  "duration_sec": 0.0074,
+  "throughput_candidates_per_sec": 1347091.6,
+  "rust_native_core_active": true,
+  "proposition_1_bound": {
+    "Clean Repo (20% Defect)": {
+      "incoming_defect_rate_pct": 20.0,
+      "candidates_evaluated": 3333,
+      "uncalibrated_prior_50": {
+        "admitted": 2717,
+        "defects": 78,
+        "defect_rate_pct": 2.87,
+        "bound_satisfied": true
+      },
+      "calibrated_governor": {
+        "admitted": 2664,
+        "defects": 25,
+        "defect_rate_pct": 0.94,
+        "bound_satisfied": true,
+        "safety_margin_pct": 15.73
+      }
+    },
+    "Balanced Prior (50% Defect)": {
+      "incoming_defect_rate_pct": 50.0,
+      "candidates_evaluated": 3333,
+      "uncalibrated_prior_50": {
+        "admitted": 1861,
+        "defects": 192,
+        "defect_rate_pct": 10.32,
+        "bound_satisfied": true
+      },
+      "calibrated_governor": {
+        "admitted": 1725,
+        "defects": 56,
+        "defect_rate_pct": 3.25,
+        "bound_satisfied": true,
+        "safety_margin_pct": 13.42
+      }
+    },
+    "Hostile/Buggy Agent (80% Defect)": {
+      "incoming_defect_rate_pct": 80.0,
+      "candidates_evaluated": 3333,
+      "uncalibrated_prior_50": {
+        "admitted": 944,
+        "defects": 304,
+        "defect_rate_pct": 32.2,
+        "bound_satisfied": false
+      },
+      "calibrated_governor": {
+        "admitted": 766,
+        "defects": 126,
+        "defect_rate_pct": 16.45,
+        "bound_satisfied": true,
+        "safety_margin_pct": 0.22
+      }
+    }
+  },
+  "queue_congestion": {
+    "capacity_K": 4,
+    "series": [
+      {
+        "arrival_load": 1,
+        "traffic_intensity_rho": 0.25,
+        "admitted_to_review": 1,
+        "deprioritized": 0,
+        "total_welfare_W": 0.0164,
+        "capacity_shadow_price_lambda": 0.0,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "REVIEW",
+        "marginal_review_net_utility": 0.012
+      },
+      {
+        "arrival_load": 2,
+        "traffic_intensity_rho": 0.5,
+        "admitted_to_review": 2,
+        "deprioritized": 0,
+        "total_welfare_W": 0.0275,
+        "capacity_shadow_price_lambda": 0.0,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "REVIEW",
+        "marginal_review_net_utility": 0.012
+      },
+      {
+        "arrival_load": 4,
+        "traffic_intensity_rho": 1.0,
+        "admitted_to_review": 4,
+        "deprioritized": 0,
+        "total_welfare_W": 0.0301,
+        "capacity_shadow_price_lambda": 0.0,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "REVIEW",
+        "marginal_review_net_utility": 0.012
+      },
+      {
+        "arrival_load": 8,
+        "traffic_intensity_rho": 2.0,
+        "admitted_to_review": 4,
+        "deprioritized": 4,
+        "total_welfare_W": 0.0482,
+        "capacity_shadow_price_lambda": 0.005833,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "REVIEW",
+        "marginal_review_net_utility": 0.006167
+      },
+      {
+        "arrival_load": 12,
+        "traffic_intensity_rho": 3.0,
+        "admitted_to_review": 4,
+        "deprioritized": 8,
+        "total_welfare_W": 0.0622,
+        "capacity_shadow_price_lambda": 0.012746,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "ABSTAIN",
+        "marginal_review_net_utility": -0.000746
+      },
+      {
+        "arrival_load": 16,
+        "traffic_intensity_rho": 4.0,
+        "admitted_to_review": 4,
+        "deprioritized": 12,
+        "total_welfare_W": 0.0601,
+        "capacity_shadow_price_lambda": 0.013497,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "ABSTAIN",
+        "marginal_review_net_utility": -0.001497
+      },
+      {
+        "arrival_load": 24,
+        "traffic_intensity_rho": 6.0,
+        "admitted_to_review": 4,
+        "deprioritized": 20,
+        "total_welfare_W": 0.0623,
+        "capacity_shadow_price_lambda": 0.013673,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "ABSTAIN",
+        "marginal_review_net_utility": -0.001673
+      },
+      {
+        "arrival_load": 32,
+        "traffic_intensity_rho": 8.0,
+        "admitted_to_review": 4,
+        "deprioritized": 28,
+        "total_welfare_W": 0.0686,
+        "capacity_shadow_price_lambda": 0.015276,
+        "marginal_candidate_belief": 0.7,
+        "marginal_candidate_decision": "ABSTAIN",
+        "marginal_review_net_utility": -0.003276
+      }
+    ]
+  },
+  "economics": {
+    "naive_ci_cost_usd": 20000.0,
+    "governed_agent_ci_cost_usd": 123.3114,
+    "cost_savings_usd": 19876.69,
+    "cost_savings_pct": 99.38,
+    "docker_containers_run": 5155,
+    "docker_containers_avoided": 4844,
+    "container_avoidance_pct": 48.44
+  }
+}

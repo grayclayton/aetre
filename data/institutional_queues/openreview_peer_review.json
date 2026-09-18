@@ -1,0 +1,62 @@
+[
+  {
+    "id": "OPENREVIEW-ICLR-2025-01",
+    "domain": "Machine Learning & AI Theory",
+    "title": "Scalable Exact Inference in Non-Gaussian State Space Models via Sliced-Wasserstein Transport",
+    "authors": ["A. Chen", "M. K. Lindqvist", "S. Boyd"],
+    "review_scores": [8.0, 7.0, 4.0, 8.0],
+    "reviewer_confidence": [4.0, 3.0, 2.0, 4.0],
+    "mean_score": 6.75,
+    "score_variance": 3.58,
+    "is_boundary_case": true,
+    "historical_decision": "Accepted (Oral)",
+    "unconventional_novelty": 0.85,
+    "target_test_focus": "VOI Boundary Review Triage",
+    "abstract": "We develop a non-asymptotic transport framework for exact filtering in nonlinear, non-Gaussian dynamical systems. The high variance among reviewers (scores ranging from 4 to 8) indicates substantial initial epistemic disagreement near the conference acceptance threshold."
+  },
+  {
+    "id": "OPENREVIEW-ICLR-2025-02",
+    "domain": "Machine Learning & Applications",
+    "title": "A Generic Prompt Compression Layer for Commercial LLM APIs",
+    "authors": ["FastAI Engineering Group"],
+    "review_scores": [5.0, 5.0, 5.0, 6.0],
+    "reviewer_confidence": [5.0, 4.0, 5.0, 4.0],
+    "mean_score": 5.25,
+    "score_variance": 0.25,
+    "is_boundary_case": false,
+    "historical_decision": "Rejected",
+    "unconventional_novelty": 0.15,
+    "target_test_focus": "Fast-Reject Low-VOI Filter",
+    "abstract": "An empirical benchmark of simple lexical pruning heuristics on API tokens. Low variance and unanimous mediocre scores show low epistemic uncertainty; investing deep human review hours here yields minimal value-of-information."
+  },
+  {
+    "id": "OPENREVIEW-ICLR-2025-03",
+    "domain": "AI Safety & Interpretability",
+    "title": "Mechanistic Circuit Discovery in Transformer Attention Heads via Sparse Dictionary Learning",
+    "authors": ["E. Vance", "J. R. Mercer", "L. Torvalds"],
+    "review_scores": [9.0, 9.0, 8.0, 9.0],
+    "reviewer_confidence": [5.0, 5.0, 4.0, 5.0],
+    "mean_score": 8.75,
+    "score_variance": 0.25,
+    "is_boundary_case": false,
+    "historical_decision": "Accepted (Spotlight)",
+    "unconventional_novelty": 0.90,
+    "target_test_focus": "Fast-Pass Phase 2 Allocation",
+    "abstract": "Clear consensus high-quality discovery. Prior mean is well above the acceptance threshold with near-zero epistemic variance. Optimal routing: fast-pass directly to presentation without consuming additional reviewer budget."
+  },
+  {
+    "id": "OPENREVIEW-ICLR-2025-04",
+    "domain": "Reinforcement Learning",
+    "title": "Non-Markovian Credit Assignment via Topological Path Signatures",
+    "authors": ["D. K. Rao", "H. Zhang"],
+    "review_scores": [6.0, 3.0, 7.0, 4.0],
+    "reviewer_confidence": [3.0, 2.0, 3.0, 2.0],
+    "mean_score": 5.00,
+    "score_variance": 3.33,
+    "is_boundary_case": true,
+    "historical_decision": "Rejected (Counterfactual High Value)",
+    "unconventional_novelty": 0.92,
+    "target_test_focus": "Exploration Audit Recovery",
+    "abstract": "Highly unconventional formulation that was rejected by conventional heuristic scoring due to noisy preliminary signals, but later garnered over 300 citations as a breakthrough in mathematical RL."
+  }
+]

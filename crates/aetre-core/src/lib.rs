@@ -7,7 +7,9 @@
 
 pub mod audit;
 pub mod calibration;
+pub mod governor;
 pub mod investment;
+pub mod knapsack;
 pub mod matching;
 pub mod multi_attribute;
 pub mod queue;
@@ -18,8 +20,14 @@ pub mod staking;
 pub mod types;
 pub mod voi;
 
+#[cfg(test)]
+mod tests_governed;
+
 // Re-export key interfaces
 pub use audit::{calculate_exploration_audit, AuditResult};
+pub use governor::{Decision as BellmanDecision, Governor, ReviewBoundaryDecision};
+pub use knapsack::{CandidateSubmission, KnapsackAdmissionReport, KnapsackController};
+
 pub use calibration::{
     calculate_brier_score, calculate_expected_calibration_error, evaluate_text_robustness,
     PerturbationRobustnessReport, PlattCalibrator,

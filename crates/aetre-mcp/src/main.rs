@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use std::fs;
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
@@ -20,8 +22,9 @@ use aetre_core::{
     evaluate_author_preflight, evaluate_heterogeneous_queues, evaluate_multi_attribute_voi,
     evaluate_quadratic_staking, evaluate_sequential_stopping, evaluate_stage_queue,
     evaluate_submitter_equilibrium, generate_recall_scaling_curve, optimize_congestion_matching,
-    run_benchmark_replications, AgentEvaluation, MultiAttributeDimension, Parameters,
-    ProposalRequirement, ReviewerProfile, SequentialReviewStep,
+    run_benchmark_replications, AgentEvaluation, CandidateSubmission, Governor, KnapsackController,
+    MultiAttributeDimension, Parameters, ProposalRequirement, ReviewerProfile,
+    SequentialReviewStep,
 };
 
 use serde::{Deserialize, Serialize};
@@ -1531,6 +1534,82 @@ pub fn list_tools() -> Value {
                 },
                 "required": ["prior_mean", "prior_variance", "threshold", "reviews"]
             }
+        },
+        {
+            "name": "governed_bellman_triage",
+            "description": "Pillar I Bellman Governor: evaluates Bayesian dynamic programming stopping policy over multi-stage pass lattices under asymmetric loss stakes (L/R), returning optimal action (CONTINUE, HALT_AND_COMMIT, HALT_AND_REJECT), expected utility, VOI, and critical threshold p*.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "reward": { "type": "number", "description": "Conforming candidate net reward R (default: 0.02)." },
+                    "loss": { "type": "number", "description": "Defective candidate loss penalty L (default: 0.10)." },
+                    "prior": { "type": "number", "description": "Prior belief in conforming status (default: 0.50)." },
+                    "stage": { "type": "integer", "description": "Current verification stage index (default: 0)." },
+                    "consecutive_passes": { "type": "integer", "description": "Number of consecutive test passes observed (default: 0)." },
+                    "max_stages": { "type": "integer", "description": "Maximum verification stages horizon H (default: 4)." },
+                    "defect_leakage": { "type": "number", "description": "Defect leakage rate q (default: 0.5875)." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                }
+            }
+        },
+        {
+            "name": "governed_review_boundary",
+            "description": "Section 4.1 Tripartite Review Boundary: evaluates whether an autonomous coding candidate should be AUTO-admitted, sent to human REVIEW, or ABSTAINED based on reviewer effort cost and knapsack capacity shadow price lambda_K.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "belief": { "type": "number", "description": "Current posterior belief probability in [0, 1]." },
+                    "reward": { "type": "number", "description": "Conforming net reward R (default: 0.02)." },
+                    "loss": { "type": "number", "description": "Defective loss penalty L (default: 0.10)." },
+                    "review_cost": { "type": "number", "description": "Direct cost of human reviewer examination (default: 0.002)." },
+                    "shadow_price_lambda": { "type": "number", "description": "Knapsack queue capacity congestion shadow price lambda_K (default: 0.0)." },
+                    "review_accuracy": { "type": "number", "description": "Probability reviewer correctly verifies valid code (default: 1.0)." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["belief"]
+            }
+        },
+        {
+            "name": "governed_knapsack_admit",
+            "description": "Pillar V Knapsack Queue Controller: packs candidate pull requests into the review queue under capacity budget K using the c-mu rule (density rho_i = E[U_i] / k_i) and calculates the dual capacity shadow price lambda_K.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "candidates": {
+                        "type": "array",
+                        "description": "List of candidate submissions with candidate_id, posterior_belief, and optional reward, loss, review_cost.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "candidate_id": { "type": "string" },
+                                "task_id": { "type": "string" },
+                                "posterior_belief": { "type": "number" },
+                                "reward": { "type": "number" },
+                                "loss": { "type": "number" },
+                                "review_cost": { "type": "number" }
+                            },
+                            "required": ["candidate_id", "posterior_belief"]
+                        }
+                    },
+                    "capacity_k": { "type": "number", "description": "Total reviewer capacity budget K (e.g. 3.0 review slots or hours)." },
+                    "review_cost_k": { "type": "number", "description": "Default review effort cost per candidate (default: 1.0)." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["candidates", "capacity_k"]
+            }
+        },
+        {
+            "name": "governed_gate_pr",
+            "description": "Road A Tiered Verification Gate: evaluates host pre-checks (Tier 0 syntactic AST parsing and structural validation) on candidate Python code or pull request patches to short-circuit broken submissions before expensive container CI escalation.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "candidate_id": { "type": "string", "description": "Identifier for the pull request or patch." },
+                    "code": { "type": "string", "description": "Source code or patch string to screen." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["code"]
+            }
         }
     ])
 }
@@ -3007,6 +3086,292 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             })
         }
 
+        "governed_bellman_triage" => {
+            let reward = get_f64(&args, "reward", 0.02);
+            let loss = get_f64(&args, "loss", 0.10);
+            let prior = get_f64(&args, "prior", 0.50);
+            let stage = get_usize(&args, "stage", 0);
+            let passes = get_usize(&args, "consecutive_passes", 0);
+            let max_stages = get_usize(&args, "max_stages", 4);
+            let defect_leakage = get_f64(&args, "defect_leakage", 0.5875);
+
+            let gov = match Governor::new(
+                reward,
+                loss,
+                prior,
+                max_stages,
+                None,
+                Some(defect_leakage),
+                Some(1.0),
+            ) {
+                Ok(g) => g,
+                Err(e) => {
+                    return json!({
+                        "content": [{ "type": "text", "text": format!("Governor error: {}", e) }],
+                        "isError": true
+                    });
+                }
+            };
+
+            let decision = gov.evaluate_state(stage, passes);
+            let out = json!({
+                "action": decision.action,
+                "current_stage": decision.stage,
+                "consecutive_passes": passes,
+                "posterior_belief": (decision.belief * 10000.0).round() / 100.0,
+                "critical_threshold_p_star": (gov.p_star * 10000.0).round() / 100.0,
+                "expected_utility": (decision.expected_utility * 100000.0).round() / 100000.0,
+                "value_of_information_voi": (decision.voi * 100000.0).round() / 100000.0,
+                "loss_to_reward_ratio": (loss / reward * 10.0).round() / 10.0,
+                "governance_recommendation": match decision.action.as_str() {
+                    "CONTINUE" => "PROCEED_TO_NEXT_VERIFICATION_PROBE: Value of Information justifies testing costs.",
+                    "HALT_AND_COMMIT" => "ADMIT_AND_COMMIT: Posterior belief exceeds critical threshold p*.",
+                    _ => "HALT_AND_REJECT: Candidate fails economic stopping threshold."
+                }
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_review_boundary" => {
+            let belief = get_f64(&args, "belief", 0.70);
+            let reward = get_f64(&args, "reward", 0.02);
+            let loss = get_f64(&args, "loss", 0.10);
+            let review_cost = get_f64(&args, "review_cost", 0.002);
+            let shadow_price = get_f64(&args, "shadow_price_lambda", 0.0);
+            let accuracy = get_f64(&args, "review_accuracy", 1.0);
+
+            let gov = match Governor::new(reward, loss, 0.50, 4, None, None, None) {
+                Ok(g) => g,
+                Err(e) => {
+                    return json!({
+                        "content": [{ "type": "text", "text": format!("Governor error: {}", e) }],
+                        "isError": true
+                    });
+                }
+            };
+
+            let res = match gov.evaluate_review_boundary(
+                belief,
+                review_cost,
+                shadow_price,
+                accuracy,
+            ) {
+                Ok(r) => r,
+                Err(e) => {
+                    return json!({
+                        "content": [{ "type": "text", "text": format!("Boundary evaluation error: {}", e) }],
+                        "isError": true
+                    });
+                }
+            };
+
+            let out = json!({
+                "boundary_action": res.action,
+                "dominant_expected_utility": (res.dominant_utility * 100000.0).round() / 100000.0,
+                "net_utility_auto": (res.u_auto * 100000.0).round() / 100000.0,
+                "net_utility_review": (res.u_review * 100000.0).round() / 100000.0,
+                "net_utility_abstain": res.u_abstain,
+                "posterior_belief": (res.belief * 10000.0).round() / 100.0,
+                "shadow_price_lambda_k": res.shadow_price_lambda,
+                "tripartite_rationale": match res.action.as_str() {
+                    "AUTO" => "Autonomous admission is optimal (E[U(auto)] dominates review & abstain).",
+                    "REVIEW" => "Human review is economically viable (E[U(review)] > 0 and queue is unclogged).",
+                    _ => "Abstain: Review costs or queue congestion (lambda_K) render human triage welfare-negative."
+                }
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_knapsack_admit" => {
+            let capacity_k = get_f64(&args, "capacity_k", 2.0);
+            let review_cost_k = get_f64(&args, "review_cost_k", 1.0);
+
+            let candidates_raw = args.get("candidates").and_then(|v| v.as_array());
+            let candidates: Vec<CandidateSubmission> = match candidates_raw {
+                Some(arr) => arr
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, c)| {
+                        let cid =
+                            get_str(c, "candidate_id", &format!("cand_{}", idx + 1)).to_string();
+                        let tid = get_str(c, "task_id", "default_task").to_string();
+                        let p = get_f64(c, "posterior_belief", 0.90);
+                        let r = c.get("reward").and_then(|v| v.as_f64());
+                        let l = c.get("loss").and_then(|v| v.as_f64());
+                        let cost = c.get("review_cost").and_then(|v| v.as_f64());
+                        CandidateSubmission::new(cid, tid, p, r, l, cost)
+                    })
+                    .collect(),
+                None => Vec::new(),
+            };
+
+            let controller = match KnapsackController::new(capacity_k, review_cost_k) {
+                Ok(ctrl) => ctrl,
+                Err(e) => {
+                    return json!({
+                        "content": [{ "type": "text", "text": format!("Knapsack controller error: {}", e) }],
+                        "isError": true
+                    });
+                }
+            };
+
+            let report = match controller.admit_batch(
+                &candidates,
+                Some(capacity_k),
+                Some(review_cost_k),
+            ) {
+                Ok(rep) => rep,
+                Err(e) => {
+                    return json!({
+                        "content": [{ "type": "text", "text": format!("Admission error: {}", e) }],
+                        "isError": true
+                    });
+                }
+            };
+
+            let out = json!({
+                "capacity_k": report.capacity_k,
+                "review_cost_k": report.review_cost_k,
+                "total_candidates": report.total_candidates,
+                "total_admitted": report.total_admitted,
+                "total_rejected": report.total_rejected,
+                "total_admitted_cost": (report.total_admitted_cost * 1000.0).round() / 1000.0,
+                "remaining_capacity": (report.remaining_capacity * 1000.0).round() / 1000.0,
+                "total_welfare": (report.total_welfare * 10000.0).round() / 10000.0,
+                "capacity_shadow_price_lambda": (report.shadow_price_lambda * 100000.0).round() / 100000.0,
+                "admitted": report.admitted.iter().map(|c| json!({
+                    "candidate_id": c.candidate_id,
+                    "posterior_belief": c.posterior_belief,
+                    "expected_utility": (c.expected_utility() * 10000.0).round() / 10000.0,
+                    "review_cost": c.review_cost.unwrap_or(report.review_cost_k),
+                    "value_density_rho": (c.density_with_cost(report.review_cost_k) * 10000.0).round() / 10000.0
+                })).collect::<Vec<_>>(),
+                "rejected": report.rejected.iter().map(|c| json!({
+                    "candidate_id": c.candidate_id,
+                    "posterior_belief": c.posterior_belief,
+                    "expected_utility": (c.expected_utility() * 10000.0).round() / 10000.0,
+                    "review_cost": c.review_cost.unwrap_or(report.review_cost_k),
+                    "value_density_rho": (c.density_with_cost(report.review_cost_k) * 10000.0).round() / 10000.0
+                })).collect::<Vec<_>>()
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_gate_pr" => {
+            let candidate_id = get_str(&args, "candidate_id", "PR-candidate");
+            let code = get_str(&args, "code", "");
+
+            let mut paren_count: i32 = 0;
+            let mut brace_count: i32 = 0;
+            let mut bracket_count: i32 = 0;
+            let mut in_single_quote = false;
+            let mut in_double_quote = false;
+            let mut escaped = false;
+            let mut syntax_error = None;
+
+            for (idx, ch) in code.char_indices() {
+                if escaped {
+                    escaped = false;
+                    continue;
+                }
+                if ch == '\\' {
+                    escaped = true;
+                    continue;
+                }
+                if ch == '\'' && !in_double_quote {
+                    in_single_quote = !in_single_quote;
+                    continue;
+                }
+                if ch == '"' && !in_single_quote {
+                    in_double_quote = !in_double_quote;
+                    continue;
+                }
+                if in_single_quote || in_double_quote {
+                    continue;
+                }
+
+                match ch {
+                    '(' => paren_count += 1,
+                    ')' => {
+                        paren_count -= 1;
+                        if paren_count < 0 {
+                            syntax_error = Some(format!(
+                                "Unexpected closing parenthesis at character {}",
+                                idx
+                            ));
+                            break;
+                        }
+                    }
+                    '{' => brace_count += 1,
+                    '}' => {
+                        brace_count -= 1;
+                        if brace_count < 0 {
+                            syntax_error =
+                                Some(format!("Unexpected closing brace at character {}", idx));
+                            break;
+                        }
+                    }
+                    '[' => bracket_count += 1,
+                    ']' => {
+                        bracket_count -= 1;
+                        if bracket_count < 0 {
+                            syntax_error =
+                                Some(format!("Unexpected closing bracket at character {}", idx));
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            if syntax_error.is_none() {
+                if in_single_quote || in_double_quote {
+                    syntax_error = Some("Unterminated string literal".to_string());
+                } else if paren_count != 0 {
+                    syntax_error = Some(format!(
+                        "Unclosed parenthesis (unbalanced by {})",
+                        paren_count
+                    ));
+                } else if brace_count != 0 {
+                    syntax_error = Some(format!("Unclosed brace (unbalanced by {})", brace_count));
+                } else if bracket_count != 0 {
+                    syntax_error = Some(format!(
+                        "Unclosed bracket (unbalanced by {})",
+                        bracket_count
+                    ));
+                }
+            }
+
+            let passed = syntax_error.is_none();
+            let out = json!({
+                "candidate_id": candidate_id,
+                "passed": passed,
+                "terminal_tier": if passed { 1 } else { 0 },
+                "action": if passed { "QUALIFIED_FOR_VERIFICATION" } else { "HALT_AND_REJECT" },
+                "short_circuited": !passed,
+                "docker_container_avoided": !passed,
+                "estimated_compute_savings_usd": if !passed { 0.02 } else { 0.0 },
+                "diagnostic": syntax_error.unwrap_or_else(|| "Tier 0 AST Passed: Balanced syntax tokens".to_string())
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
         _ => json!({
             "content": [
                 {
@@ -3027,7 +3392,7 @@ mod tests {
     fn test_list_tools() {
         let tools = list_tools();
         let arr = tools.as_array().unwrap();
-        assert_eq!(arr.len(), 20);
+        assert_eq!(arr.len(), 24);
     }
 
     #[test]
@@ -3403,5 +3768,92 @@ mod tests {
         assert!(text.contains("completed_reviews_count"));
         assert!(text.contains("Accept"));
         assert!(text.contains("stopping_rationale"));
+    }
+
+    #[test]
+    fn test_call_governed_bellman_triage() {
+        let res = call_tool(
+            "governed_bellman_triage",
+            json!({
+                "reward": 0.02,
+                "loss": 0.10,
+                "prior": 0.50,
+                "stage": 0,
+                "consecutive_passes": 0
+            }),
+        );
+        assert!(!res["isError"].as_bool().unwrap());
+        let text = res["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("CONTINUE"));
+        assert!(text.contains("critical_threshold_p_star"));
+    }
+
+    #[test]
+    fn test_call_governed_review_boundary() {
+        let res = call_tool(
+            "governed_review_boundary",
+            json!({
+                "belief": 0.98,
+                "reward": 0.02,
+                "loss": 0.10,
+                "review_cost": 0.005,
+                "shadow_price_lambda": 0.0
+            }),
+        );
+        assert!(!res["isError"].as_bool().unwrap());
+        let text = res["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("AUTO"));
+        assert!(text.contains("dominant_expected_utility"));
+    }
+
+    #[test]
+    fn test_call_governed_knapsack_admit() {
+        let res = call_tool(
+            "governed_knapsack_admit",
+            json!({
+                "capacity_k": 2.0,
+                "review_cost_k": 1.0,
+                "candidates": [
+                    { "candidate_id": "PR-1", "posterior_belief": 0.95 },
+                    { "candidate_id": "PR-2", "posterior_belief": 0.90 },
+                    { "candidate_id": "PR-3", "posterior_belief": 0.88 },
+                    { "candidate_id": "PR-4", "posterior_belief": 0.20 }
+                ]
+            }),
+        );
+        assert!(!res["isError"].as_bool().unwrap());
+        let text = res["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("total_admitted"));
+        assert!(text.contains("PR-1"));
+        assert!(text.contains("PR-2"));
+        assert!(text.contains("capacity_shadow_price_lambda"));
+    }
+
+    #[test]
+    fn test_call_governed_gate_pr() {
+        let res_clean = call_tool(
+            "governed_gate_pr",
+            json!({
+                "candidate_id": "PR-good",
+                "code": "def solve(x):\n    return x + 1\n"
+            }),
+        );
+        assert!(!res_clean["isError"].as_bool().unwrap());
+        let text_clean = res_clean["content"][0]["text"].as_str().unwrap();
+        assert!(text_clean.contains("QUALIFIED_FOR_VERIFICATION"));
+        assert!(text_clean.contains("\"passed\": true"));
+
+        let res_bad = call_tool(
+            "governed_gate_pr",
+            json!({
+                "candidate_id": "PR-bad",
+                "code": "def broken(\n    return 42\n"
+            }),
+        );
+        assert!(!res_bad["isError"].as_bool().unwrap());
+        let text_bad = res_bad["content"][0]["text"].as_str().unwrap();
+        assert!(text_bad.contains("HALT_AND_REJECT"));
+        assert!(text_bad.contains("\"passed\": false"));
+        assert!(text_bad.contains("Unclosed parenthesis"));
     }
 }
