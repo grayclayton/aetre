@@ -5,7 +5,7 @@ abstract: "A high-performance operations-research and Bayesian decision-theoreti
 authors:
   - family-names: "Gray"
     given-names: "Clayton"
-version: "0.2.0"
+version: "0.1.0"
 doi: "10.5281/zenodo.22098366"
 date-released: "2026-08-25"
 license: "AGPL-3.0-or-later"
@@ -43,4 +43,5 @@ references:
     year: 2026
     doi: "10.5281/zenodo.22814799"
     institution: "Zenodo / SSRN Working Paper Series"
+    notes: "The DOI resolves to the replication bundle 'The Implementation Frontier: Capital Allocation, Deliberative Stopping, and Verified Agent Gatekeeping', which contains this paper."
 

@@ -1,7 +1,7 @@
 # AETRE & The Governed Agent: Unified Decision-Theoretic Operating System
 
-[![Zenodo DOI (Innovation Gap)](https://zenodo.org/badge/1346232534.svg)](https://doi.org/10.5281/zenodo.22098366)
-[![Zenodo DOI (Admission Frontier)](https://zenodo.org/badge/DOI/10.5281/zenodo.22814799.svg)](https://doi.org/10.5281/zenodo.22814799)
+[![Zenodo DOI (AETRE software)](https://zenodo.org/badge/1346232534.svg)](https://doi.org/10.5281/zenodo.22098366)
+[![Zenodo DOI (replication bundle)](https://zenodo.org/badge/DOI/10.5281/zenodo.22814799.svg)](https://doi.org/10.5281/zenodo.22814799)
 [![SSRN: 7161458](https://img.shields.io/badge/SSRN-7161458-blue.svg)](https://ssrn.com/abstract=7161458)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-green.svg)](LICENSE)
 [![Rust: 1.75+](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
@@ -19,9 +19,12 @@
 
 Based on the research series by Clayton Gray (2026):  
 1. **The Innovation-Absorption Gap: How Artificial Intelligence Can Accelerate Idea Production Faster Than Complementary Institutions Adapt**  
-   *Clayton Gray (2026a)* — [SSRN: 7161458](https://ssrn.com/abstract=7161458) | [Zenodo: 10.5281/zenodo.22098366](https://doi.org/10.5281/zenodo.22098366)
+   *Clayton Gray (2026a)* — [SSRN: 7161458](https://ssrn.com/abstract=7161458)
 2. **The Admission Frontier: An Economically Regulated Decision-Theoretic Runtime and Fail-Closed Verification Gate for Autonomous Agents**  
-   *Clayton Gray (2026d)* — [Zenodo: 10.5281/zenodo.22814799](https://doi.org/10.5281/zenodo.22814799)
+   *Clayton Gray (2026d)* — distributed within the replication bundle *The Implementation Frontier: Capital Allocation, Deliberative Stopping, and Verified Agent Gatekeeping* ([Zenodo: 10.5281/zenodo.22814799](https://doi.org/10.5281/zenodo.22814799))
+
+This software is archived under its own DOI, separate from the papers above:
+**AETRE: Adaptive Epistemic Triage & Recall Engine** ([Zenodo: 10.5281/zenodo.22098366](https://doi.org/10.5281/zenodo.22098366)).
 
 ---
 
