@@ -180,14 +180,14 @@ AETRE provides a high-performance native JSON-RPC 2.0 Model Context Protocol (MC
 
 ### Configuration (Claude Desktop / Cursor)
 
-Add to your `claude_desktop_config.json`:
+Install the binary (`cargo install --git https://github.com/grayclayton/aetre.git aetre-mcp`),
+then add to your `claude_desktop_config.json`. The server speaks stdio by default:
 
 ```json
 {
   "mcpServers": {
     "aetre": {
-      "command": "cargo",
-      "args": ["run", "--release", "--manifest-path", "/PATH/TO/aetre/Cargo.toml", "-p", "aetre-mcp"]
+      "command": "aetre-mcp"
     }
   }
 }
@@ -254,21 +254,21 @@ See [`.github/workflows/governed-gate-template.yml`](.github/workflows/governed-
 
 ---
 
-## Open Engine vs. Enterprise Commercial SaaS
+## Open Engine vs. Commercial License
 
 AETRE follows an **Open Engine / Dual-Track Architecture**:
 
 | Feature / Capability | Open Engine (AGPL-3.0) | Enterprise Commercial License |
 | :--- | :---: | :---: |
 | **Core Mathematical Algorithms (`aetre-core`)** | ✅ Fully Open & Auditable | ✅ Included |
-| **Model Context Protocol (MCP) Server** | ✅ 24 Local Native Tools | ✅ Dedicated Cloud & Local |
+| **Model Context Protocol (MCP) Server** | ✅ 24 local native tools | ✅ Same engine, no copyleft obligation |
 | **Micro Execution Governance (Governed Agent)** | ✅ Included (Road A Gate) | ✅ Enterprise Policy Enforcement |
 | **Local CLI & Terminal Simulation Harness** | ✅ Included | ✅ Included |
 | **Author Pre-Flight Scans** | ✅ Source-configurable | ✅ Supported Unlimited Deployment |
-| **Automated VC Dealflow Webhook (Airtable/Affinity)** | Local Script | ✅ Managed Cloud Sync |
+| **Automated VC Dealflow Webhook (Airtable/Affinity)** | Local script | ✅ Local script, commercially licensed |
 | **Custom Institutional Priors Calibration** | Open Source | ✅ Pre-Trained Enterprise Priors |
 | **Commercial Exemption (No AGPL copyleft)** | ❌ Bound by AGPL-3.0 | ✅ Full Commercial License |
-| **Dedicated SLA & Multi-Tenant Support** | Community | ✅ Priority SLA & Direct Support |
+| **Support** | Community | ✅ Direct channel to the author |
 
 ---
 
