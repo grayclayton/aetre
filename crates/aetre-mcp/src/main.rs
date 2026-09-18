@@ -99,10 +99,10 @@ fn main() -> io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let has_explicit_http_env =
         std::env::var("AETRE_HTTP_SERVER_TOKEN").is_ok() || std::env::var("PORT").is_ok();
-    let is_studio_mode = args
+    let http_requested_by_flag = args
         .iter()
-        .any(|a| a == "--studio" || a == "--serve" || a == "studio" || a == "--web")
-        || has_explicit_http_env;
+        .any(|a| a == "--studio" || a == "--serve" || a == "studio" || a == "--web");
+    let is_studio_mode = http_requested_by_flag || has_explicit_http_env;
     let no_browser = args
         .iter()
         .any(|a| a == "--no-browser" || a == "--headless")
@@ -114,7 +114,21 @@ fn main() -> io::Result<()> {
             .ok()
             .and_then(|value| value.parse::<u16>().ok())
             .unwrap_or(8080);
-        let _ = server::start_embedded_server(port, !no_browser);
+        if let Err(err) = server::start_embedded_server(port, !no_browser) {
+            eprintln!("ERROR: could not start the AETRE HTTP server on port {port}: {err}");
+            eprintln!("HINT: set AETRE_HTTP_SERVER_TOKEN when AETRE_BIND_ADDRESS is not");
+            eprintln!(
+                "      loopback (that is the case inside a container), or bind to 127.0.0.1."
+            );
+            if http_requested_by_flag {
+                // HTTP was asked for by name, so failing to provide it is fatal.
+                eprintln!("FATAL: exiting rather than idling with nothing listening.");
+                std::process::exit(1);
+            }
+            // Studio mode was only inferred from PORT / AETRE_HTTP_SERVER_TOKEN being
+            // set. Keep serving MCP over stdio, which is what `docker run -i` relies on.
+            eprintln!("NOTE: continuing in stdio MCP mode; no HTTP listener is available.");
+        }
     }
 
     let stdin = io::stdin();
