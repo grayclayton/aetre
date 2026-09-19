@@ -11,6 +11,75 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 
+/// Rejects a call whose arguments do not match the tool's declared schema.
+///
+/// Without this a misspelled parameter is silently ignored and the default is
+/// scored instead, so the caller gets a confident answer to a question it did
+/// not ask. A model guessing `abstract` where the schema says `text` is exactly
+/// the case this catches. Fail closed, which is what the rest of the system does.
+fn schema_violation(name: &str, args: &Value) -> Option<Value> {
+    let tools = crate::schemas::all_tools();
+    let tool = tools
+        .as_array()?
+        .iter()
+        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some(name))?;
+    let schema = tool.get("inputSchema")?;
+    let properties = schema.get("properties")?.as_object()?;
+    let required: Vec<&str> = schema
+        .get("required")
+        .and_then(|r| r.as_array())
+        .map(|a| a.iter().filter_map(|v| v.as_str()).collect())
+        .unwrap_or_default();
+
+    let empty = serde_json::Map::new();
+    let supplied = args.as_object().unwrap_or(&empty);
+
+    let missing: Vec<&str> = required
+        .iter()
+        .copied()
+        .filter(|key| !supplied.contains_key(*key))
+        .collect();
+    let unknown: Vec<&str> = supplied
+        .keys()
+        .map(String::as_str)
+        .filter(|key| !properties.contains_key(*key))
+        .collect();
+
+    if missing.is_empty() && unknown.is_empty() {
+        return None;
+    }
+
+    let mut accepted: Vec<&str> = properties.keys().map(String::as_str).collect();
+    accepted.sort_unstable();
+
+    let mut problems: Vec<String> = Vec::new();
+    if !missing.is_empty() {
+        problems.push(format!(
+            "missing required argument(s): {}",
+            missing.join(", ")
+        ));
+    }
+    if !unknown.is_empty() {
+        problems.push(format!("unrecognised argument(s): {}", unknown.join(", ")));
+    }
+
+    Some(json!({
+        "content": [{
+            "type": "text",
+            "text": format!(
+                "{} does not accept these arguments.
+{}
+Accepted: {}.",
+                name,
+                problems.join("
+    "),
+                accepted.join(", ")
+            )
+        }],
+        "isError": true
+    }))
+}
+
 pub fn call_tool(name: &str, args: Value) -> Value {
     let layer = active_layer();
     if !tool_in_layer(name, layer) {
@@ -25,6 +94,10 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             "isError": true
         });
     }
+    if let Some(rejection) = schema_violation(name, &args) {
+        return rejection;
+    }
+
     let tier = get_license_tier(&args);
     match name {
         "aetre_system_catalog" => {

@@ -60,6 +60,11 @@ pub fn analyze_text_heuristics(text: &str) -> EpistemicDiagnostics {
 
     let unique_words: HashSet<&str> = words.iter().copied().collect();
     let diversity = unique_words.len() as f64 / words.len() as f64;
+    // These are markers of technical content, not of claimed significance.
+    // "novel", "paradigm", "breakthrough" and "frontier" were removed: they are
+    // what an abstract says when it asserts novelty, so counting them let pure
+    // hype outscore substantive work, which is the failure this tool exists to
+    // catch.
     let novelty_keywords = [
         "quantum",
         "qubit",
@@ -71,12 +76,8 @@ pub fn analyze_text_heuristics(text: &str) -> EpistemicDiagnostics {
         "optically",
         "transport",
         "non-linear",
-        "breakthrough",
-        "paradigm",
         "non-gaussian",
-        "novel",
         "synthetic",
-        "frontier",
         "mechanistic",
         "circuit",
         "non-markovian",
@@ -256,5 +257,30 @@ mod tests {
             "quantum qubit topological transformer diffusion frontier mechanistic circuit study with a controlled experimental design and results",
         );
         assert_eq!(three.novelty_density, many.novelty_density);
+    }
+
+    #[test]
+    fn hype_does_not_outscore_substance() {
+        // The failure this guards: "novel", "paradigm" and "breakthrough" once
+        // counted as novelty, so an abstract that only claimed significance
+        // scored better than one that demonstrated it.
+        let substantive = analyze_text_heuristics(
+            "Allocates scarce reviewer capacity by Bayesian value-of-information under              Kingman queue constraints, validated on a held-out benchmark with paired              bootstrap confidence intervals.",
+        );
+        let hype = analyze_text_heuristics(
+            "This paper presents a novel framework that leverages synergies to deliver              paradigm-shifting outcomes across many important domains.",
+        );
+        assert!(
+            substantive.novelty_score > hype.novelty_score,
+            "substance {} should outscore hype {}",
+            substantive.novelty_score,
+            hype.novelty_score
+        );
+        assert!(
+            substantive.prior_mean > hype.prior_mean,
+            "substance {} should outscore hype {}",
+            substantive.prior_mean,
+            hype.prior_mean
+        );
     }
 }
