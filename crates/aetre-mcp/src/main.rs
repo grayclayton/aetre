@@ -1,5 +1,6 @@
 #![recursion_limit = "256"]
 
+use std::fmt::Write as _;
 use std::fs;
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
@@ -3721,8 +3722,10 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             let proof_hash = hasher
                 .finalize()
                 .iter()
-                .map(|b| format!("{:02x}", b))
-                .collect::<String>();
+                .fold(String::new(), |mut acc, byte| {
+                    let _ = write!(acc, "{byte:02x}");
+                    acc
+                });
 
             let mut out = json!({
                 "execution_id": execution_id,

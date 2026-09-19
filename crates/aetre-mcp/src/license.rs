@@ -413,7 +413,6 @@ mod tests {
     }
 
     #[test]
-    #[test]
     fn test_root_public_key_integrity() {
         assert_eq!(ROOT_PUBLIC_KEY_BYTES.len(), 32);
         assert!(PublicKey::from_slice(&ROOT_PUBLIC_KEY_BYTES).is_ok());
