@@ -3,7 +3,6 @@ use base64::Engine;
 use ed25519_compact::{KeyPair, PublicKey, Signature};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -314,16 +313,6 @@ pub fn resolve_license_with_key(args: &Value, pub_key: &[u8]) -> ResolvedLicense
 /// Resolves the effective license tier from tool arguments or environment variables.
 pub fn get_license_tier(args: &Value) -> LicenseTier {
     resolve_license(args).tier
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-struct QuotaStorage {
-    months: HashMap<String, MonthUsage>,
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-struct MonthUsage {
-    preflight_count: usize,
 }
 
 #[cfg(test)]
