@@ -21,7 +21,8 @@ use aetre_core::{
     calculate_heavy_tailed_voi, calculate_proposition_1_bound, correlated_posterior_update,
     evaluate_author_preflight, evaluate_heterogeneous_queues, evaluate_multi_attribute_voi,
     evaluate_quadratic_staking, evaluate_sequential_stopping, evaluate_stage_queue,
-    evaluate_submitter_equilibrium, generate_recall_scaling_curve, optimize_congestion_matching,
+    evaluate_submitter_equilibrium, evaluate_venture_benchmark, generate_recall_scaling_curve,
+    generate_staking_curve, generate_synthetic_venture_dealflow, optimize_congestion_matching,
     run_benchmark_replications, AgentEvaluation, CandidateSubmission, Governor, KnapsackController,
     MultiAttributeDimension, Parameters, ProposalRequirement, ReviewerProfile,
     SequentialReviewStep,
@@ -1778,6 +1779,40 @@ pub fn list_tools() -> Value {
                     "api_key": { "type": "string", "description": "Optional license key." }
                 },
                 "required": ["execution_id"]
+            }
+        },
+        {
+            "name": "aetre_investment_benchmark",
+            "description": "Runs the venture dealflow triage benchmark: generates a synthetic heavy-tailed cohort of deals and compares status-quo preliminary-score screening against AETRE heavy-tailed VOI triage under a fixed diligence budget.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "n_deals": { "type": "integer", "description": "Deals in the synthetic cohort. Defaults to 1000, capped at 20000." },
+                    "diligence_budget": { "type": "integer", "description": "Deals that can be taken to full diligence. Defaults to 50." },
+                    "tail_alpha": { "type": "number", "description": "Pareto tail index of the return distribution. Defaults to 1.25." },
+                    "wrapper_pct": { "type": "number", "description": "Share of the cohort that is well-packaged but low-substance. Defaults to 0.30." },
+                    "selection_boundary": { "type": "number", "description": "Preliminary score boundary for selection. Defaults to 6.0." },
+                    "hours_per_diligence": { "type": "number", "description": "Analyst hours consumed per deal diligenced. Defaults to 20.0." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": []
+            }
+        },
+        {
+            "name": "aetre_staking_curve",
+            "description": "Sweeps the submission fee across a range and returns the submitter equilibrium at each point, showing how entry volume and low-quality deterrence respond to the staking fee rather than evaluating a single fee.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "c_gen": { "type": "number", "description": "Marginal cost of generating a proposal. Defaults to 0.01." },
+                    "private_acceptance_value": { "type": "number", "description": "Private value of acceptance to the submitter. Defaults to 100.0." },
+                    "total_potential_applicants": { "type": "integer", "description": "Size of the applicant pool. Defaults to 5000." },
+                    "acceptance_capacity": { "type": "integer", "description": "Slots available for acceptance. Defaults to 200." },
+                    "max_fee": { "type": "number", "description": "Highest fee on the swept curve. Defaults to 20.0." },
+                    "steps": { "type": "integer", "description": "Points on the curve. Defaults to 10, capped at 200." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": []
             }
         }
     ])
@@ -3915,6 +3950,79 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             })
         }
 
+        "aetre_investment_benchmark" => {
+            let n_deals = get_usize(&args, "n_deals", 1000).clamp(1, 20_000);
+            let diligence_budget = get_usize(&args, "diligence_budget", 50).max(1);
+            let tail_alpha = get_f64(&args, "tail_alpha", 1.25).max(0.01);
+            let wrapper_pct = get_f64(&args, "wrapper_pct", 0.30).clamp(0.0, 1.0);
+            let selection_boundary = get_f64(&args, "selection_boundary", 6.0);
+            let hours_per_diligence = get_f64(&args, "hours_per_diligence", 20.0).max(0.0);
+
+            let deals = generate_synthetic_venture_dealflow(
+                n_deals,
+                tail_alpha,
+                wrapper_pct,
+                selection_boundary,
+            );
+            let comparison = evaluate_venture_benchmark(
+                &deals,
+                diligence_budget,
+                tail_alpha,
+                hours_per_diligence,
+            );
+
+            let body = serde_json::to_value(&comparison).unwrap_or_else(|_| json!({}));
+            let out = json!({
+                "cohort_size": n_deals,
+                "diligence_budget": diligence_budget,
+                "tail_index_alpha": tail_alpha,
+                "hours_per_diligence": hours_per_diligence,
+                "benchmark": body
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "aetre_staking_curve" => {
+            let c_gen = get_f64(&args, "c_gen", 0.01).max(0.0);
+            let value = get_f64(&args, "private_acceptance_value", 100.0).max(0.0);
+            let applicants = get_usize(&args, "total_potential_applicants", 5000).max(1);
+            let capacity = get_usize(&args, "acceptance_capacity", 200).max(1);
+            let max_fee = get_f64(&args, "max_fee", 20.0).max(0.0);
+            let steps = get_usize(&args, "steps", 10).clamp(2, 200);
+
+            let curve = generate_staking_curve(c_gen, value, applicants, capacity, max_fee, steps);
+            let points = serde_json::to_value(&curve).unwrap_or_else(|_| json!([]));
+
+            // The knee: the fee that deters the most low-quality volume per unit of fee.
+            let best = curve
+                .iter()
+                .filter(|p| p.submission_fee > 0.0)
+                .max_by(|a, b| {
+                    let da = a.low_quality_spam_deterred_pct / a.submission_fee;
+                    let db = b.low_quality_spam_deterred_pct / b.submission_fee;
+                    da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+                })
+                .map(|p| p.submission_fee);
+
+            let out = json!({
+                "total_potential_applicants": applicants,
+                "acceptance_capacity": capacity,
+                "max_fee": max_fee,
+                "steps": steps,
+                "most_efficient_fee": best,
+                "curve": points
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
         _ => json!({
             "content": [
                 {
@@ -3935,7 +4043,7 @@ mod tests {
     fn test_list_tools() {
         let tools = list_tools();
         let arr = tools.as_array().unwrap();
-        assert_eq!(arr.len(), 30);
+        assert_eq!(arr.len(), 32);
     }
 
     #[test]
