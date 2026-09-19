@@ -7,11 +7,7 @@ use std::path::PathBuf;
 mod heuristics;
 mod license;
 pub use heuristics::{analyze_text_heuristics, EpistemicDiagnostics};
-use license::{
-    current_year_month, generate_quota_exceeded_payload, generate_tier_locked_payload,
-    get_license_tier, get_preflight_usage, get_quota_status, increment_preflight_usage,
-    LicenseTier, COMMUNITY_PREFLIGHT_LIMIT,
-};
+use license::{get_license_tier, get_quota_status};
 
 pub mod format;
 pub mod server;
@@ -2057,23 +2053,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_check_governor" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_check_governor",
-                    "Kingman Heavy-Traffic Capacity Governor & Auto-Throttling",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let lambda = get_f64(&args, "arrival_rate", 90.0);
             let mu = get_f64(&args, "service_rate", 100.0);
             let cv_a = get_f64(&args, "cv_arrivals", 1.0);
@@ -2140,23 +2119,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_exploration_audit" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_exploration_audit",
-                    "5% Horvitz-Thompson Counterfactual Exploration Audits",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let n_total = get_usize(&args, "deprioritized_pool_size", 0);
             let n_sample = get_usize(&args, "audited_sample_size", 0);
             let n_found = get_usize(&args, "audited_high_value_found", 0);
@@ -2197,23 +2159,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_evaluate_staking" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_evaluate_staking",
-                    "Endogenous Submitter Entry Equilibrium Simulation",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let c_gen = get_f64(&args, "generation_cost", 0.05);
             let c_sub = get_f64(&args, "submission_fee", 5.0);
             let val = get_f64(&args, "private_acceptance_value", 100.0);
@@ -2297,23 +2242,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_correlated_posterior_update" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_correlated_posterior_update",
-                    "Multi-Agent Reviewer Debiasing & Correlation Removal",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let prior_mean = get_f64(&args, "prior_mean", 0.0);
             let prior_var = get_f64(&args, "prior_variance", 1.0);
             let rho = get_f64(&args, "inter_agent_correlation", 0.5);
@@ -2369,23 +2297,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_heavy_tailed_voi" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_heavy_tailed_voi",
-                    "Heavy-Tailed Pareto Black Swan Discovery",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let mu = get_f64(&args, "posterior_mean", 0.0);
             let var = get_f64(&args, "posterior_variance", 1.0);
             let boundary = get_f64(&args, "selection_boundary", 1.2);
@@ -2437,23 +2348,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_quadratic_staking" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_quadratic_staking",
-                    "Super-Linear Anti-Sybil Quadratic Staking",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let base_fee = get_f64(&args, "base_fee", 5.0);
             let gamma = get_f64(&args, "escalation_exponent", 2.0);
             let count = get_usize(&args, "submission_count", 1);
@@ -2492,23 +2386,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_heterogeneous_queues" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_heterogeneous_queues",
-                    "Heterogeneous Specialist Reviewer Queue Balancer",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let mut pools_input = Vec::new();
             if let Some(pools) = args.get("pools").and_then(|v| v.as_array()) {
                 for p in pools {
@@ -2562,45 +2439,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             let prior_var = diagnostics.prior_variance;
             let novelty = diagnostics.novelty_score;
 
-            let month = current_year_month();
-            let current_usage = get_preflight_usage(&month);
-
-            if tier == LicenseTier::Community && current_usage >= COMMUNITY_PREFLIGHT_LIMIT {
-                let stream_pred = if prior_mean >= boundary {
-                    "FAST-PASS: DIRECT PHASE 2"
-                } else if prior_var > 0.4 {
-                    "HIGH VOI: DEEP REVIEW QUEUE"
-                } else {
-                    "FAST-REJECT / SPAM FILTER"
-                };
-
-                let paywall_payload =
-                    generate_quota_exceeded_payload(title, prior_mean, prior_var, stream_pred);
-
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall_payload).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
-            let new_usage = if tier == LicenseTier::Community {
-                increment_preflight_usage(&month)
-            } else {
-                current_usage
-            };
-
             let report = evaluate_author_preflight(title, prior_mean, prior_var, novelty, boundary);
-
-            let remaining_checks = if tier == LicenseTier::Community {
-                COMMUNITY_PREFLIGHT_LIMIT.saturating_sub(new_usage)
-            } else {
-                999999
-            };
 
             let action_plan_str = report.prescriptive_action_plan.join("\n");
             let md_scorecard = format::format_triage_markdown(
@@ -2630,12 +2469,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 "markdown_badge": report.markdown_badge,
                 "epistemic_diagnostics": diagnostics,
                 "markdown_scorecard": md_scorecard,
-                "license_tier": tier.as_str(),
-                "monthly_quota_info": {
-                    "tier": tier.display_name(),
-                    "checks_used_this_month": new_usage,
-                    "checks_remaining": if tier == LicenseTier::Community { format!("{}/{}", remaining_checks, COMMUNITY_PREFLIGHT_LIMIT) } else { "UNLIMITED (Pro/Enterprise)".to_string() }
-                }
+                "license_tier": tier.as_str()
             });
 
             json!({
@@ -2650,23 +2484,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_simulate_benchmark" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_simulate_benchmark",
-                    "Monte Carlo Multi-Regime Benchmark Simulator",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let replications = get_usize(&args, "replications", 50);
             let baseline_arrivals = get_usize(&args, "baseline_arrivals", 1000);
             let ai_multiplier = get_f64(&args, "ai_arrival_multiplier", 5.0);
@@ -2719,13 +2536,10 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             let mut proposals_out = Vec::new();
 
             if let Some(items) = args.get("proposals").and_then(|v| v.as_array()) {
-                // Tier limit check: Community/Pro limited to 10 batch items, Enterprise unlimited
-                let limit = if tier == LicenseTier::Enterprise {
-                    5000
-                } else {
-                    10
-                };
-                let items_to_process = &items[..items.len().min(limit)];
+                // A ceiling on work per call, not a licence check: the same for
+                // everyone, and reported below when it truncates.
+                const MAX_BATCH_ITEMS: usize = 5000;
+                let items_to_process = &items[..items.len().min(MAX_BATCH_ITEMS)];
 
                 for (idx, item) in items_to_process.iter().enumerate() {
                     let title =
@@ -3104,23 +2918,6 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         }
 
         "aetre_congestion_matching" => {
-            if tier != LicenseTier::Enterprise {
-                let paywall = generate_tier_locked_payload(
-                    "aetre_congestion_matching",
-                    "Congestion-Aware Reviewer-to-Proposal Matching & Kingman Load Balancer",
-                    "Enterprise commercial license (see portal for current terms)",
-                );
-                return json!({
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": serde_json::to_string_pretty(&paywall).unwrap_or_default()
-                        }
-                    ],
-                    "isError": false
-                });
-            }
-
             let proposals: Vec<ProposalRequirement> = if let Some(arr) =
                 args.get("proposals").and_then(|v| v.as_array())
             {
@@ -4196,8 +3993,10 @@ mod tests {
                 "service_rate": 100.0
             }),
         );
+        // No licence supplied: the tool must still compute.
         let text_locked = res_locked["content"][0]["text"].as_str().unwrap();
-        assert!(text_locked.contains("TIER_LOCKED"));
+        assert!(!text_locked.contains("TIER_LOCKED"));
+        assert!(!res_locked["isError"].as_bool().unwrap_or(false));
 
         let res_unlocked = call_tool(
             "aetre_check_governor",
@@ -4222,10 +4021,12 @@ mod tests {
                 "audited_high_value_found": 1
             }),
         );
-        assert!(res_locked["content"][0]["text"]
+        // No licence supplied: the tool must still compute.
+        assert!(!res_locked["content"][0]["text"]
             .as_str()
             .unwrap()
             .contains("TIER_LOCKED"));
+        assert!(!res_locked["isError"].as_bool().unwrap_or(false));
 
         let res_unlocked = call_tool(
             "aetre_exploration_audit",
@@ -4254,10 +4055,12 @@ mod tests {
                 "replications": 10
             }),
         );
-        assert!(res_locked["content"][0]["text"]
+        // No licence supplied: the tool must still compute.
+        assert!(!res_locked["content"][0]["text"]
             .as_str()
             .unwrap()
             .contains("TIER_LOCKED"));
+        assert!(!res_locked["isError"].as_bool().unwrap_or(false));
 
         let res_unlocked = call_tool(
             "aetre_simulate_benchmark",
@@ -4376,10 +4179,12 @@ mod tests {
                 "reviewers": [{ "id": "r1", "name": "Alice", "domain": "AI", "capacity": 2, "service_rate": 10.0 }]
             }),
         );
-        assert!(res_locked["content"][0]["text"]
+        // No licence supplied: the tool must still compute.
+        assert!(!res_locked["content"][0]["text"]
             .as_str()
             .unwrap()
             .contains("TIER_LOCKED"));
+        assert!(!res_locked["isError"].as_bool().unwrap_or(false));
 
         let res_unlocked = call_tool(
             "aetre_congestion_matching",

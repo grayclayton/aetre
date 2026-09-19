@@ -9,8 +9,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub const COMMUNITY_PREFLIGHT_LIMIT: usize = 3;
-
 /// Deterministic 32-byte Root Public Key embedded directly in the AETRE binary for offline verification.
 pub const ROOT_PUBLIC_KEY_BYTES: [u8; 32] = [
     0xa6, 0x6c, 0xb7, 0x28, 0x27, 0x1a, 0xc4, 0x7b, 0xb0, 0x46, 0x69, 0xfe, 0x7d, 0x02, 0x16, 0xba,
@@ -206,6 +204,21 @@ pub struct ResolvedLicense {
 }
 
 /// Resolves the full license status from tool arguments, headers, env vars, or local config file.
+/// Returns license status overview for aetre_system_catalog.
+///
+/// Every tool runs at every tier. A commercial license buys an exemption from
+/// AGPL-3.0 copyleft for closed-source and hosted use, not extra tools, so
+/// there is nothing here to lock.
+pub fn get_quota_status(tier: LicenseTier) -> Value {
+    json!({
+        "active_tier": tier.as_str(),
+        "tier_name": tier.display_name(),
+        "tool_access": "All tools are available at every tier.",
+        "commercial_license_covers": "Exemption from AGPL-3.0 copyleft for closed-source and hosted use.",
+        "licensing": "https://www.lithiumeel.com/aetre"
+    })
+}
+
 pub fn resolve_license(args: &Value) -> ResolvedLicense {
     resolve_license_with_key(args, &ROOT_PUBLIC_KEY_BYTES)
 }
@@ -303,39 +316,6 @@ pub fn get_license_tier(args: &Value) -> LicenseTier {
     resolve_license(args).tier
 }
 
-/// Returns the current year-month string (e.g. "2026-08") using UTC civil date calculation.
-pub fn current_year_month() -> String {
-    if let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) {
-        let days = (duration.as_secs() / 86400) as i64;
-        let z = days + 719468;
-        let era = (if z >= 0 { z } else { z - 146096 }) / 146097;
-        let doe = (z - era * 146097) as u32;
-        let yoe = (doe - doe / 1020 + doe / 1461 - doe / 146096) / 365;
-        let y = (yoe as i64) + era * 400;
-        let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-        let mp = (5 * doy + 2) / 153;
-        let m = if mp < 10 { mp + 3 } else { mp - 9 };
-        let final_y = if m <= 2 { y + 1 } else { y };
-        format!("{:04}-{:02}", final_y, m)
-    } else {
-        "2026-08".to_string()
-    }
-}
-
-fn get_quota_file_path() -> PathBuf {
-    if let Ok(profile) = env::var("USERPROFILE") {
-        let dir = PathBuf::from(profile).join(".aetre");
-        let _ = fs::create_dir_all(&dir);
-        dir.join("quota.json")
-    } else if let Ok(home) = env::var("HOME") {
-        let dir = PathBuf::from(home).join(".aetre");
-        let _ = fs::create_dir_all(&dir);
-        dir.join("quota.json")
-    } else {
-        env::temp_dir().join("aetre_quota.json")
-    }
-}
-
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct QuotaStorage {
     months: HashMap<String, MonthUsage>,
@@ -344,161 +324,6 @@ struct QuotaStorage {
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct MonthUsage {
     preflight_count: usize,
-}
-
-/// Reads the current month's pre-flight count.
-pub fn get_preflight_usage(month: &str) -> usize {
-    let path = get_quota_file_path();
-    if let Ok(content) = fs::read_to_string(path) {
-        if let Ok(data) = serde_json::from_str::<QuotaStorage>(&content) {
-            return data
-                .months
-                .get(month)
-                .map(|m| m.preflight_count)
-                .unwrap_or(0);
-        }
-    }
-    0
-}
-
-/// Increments the current month's pre-flight count and returns the new value.
-pub fn increment_preflight_usage(month: &str) -> usize {
-    let path = get_quota_file_path();
-    let mut data: QuotaStorage = fs::read_to_string(&path)
-        .ok()
-        .and_then(|c| serde_json::from_str(&c).ok())
-        .unwrap_or_default();
-
-    let entry = data.months.entry(month.to_string()).or_default();
-    entry.preflight_count += 1;
-    let new_count = entry.preflight_count;
-
-    if let Ok(serialized) = serde_json::to_string_pretty(&data) {
-        let _ = fs::write(path, serialized);
-    }
-
-    new_count
-}
-
-/// Returns license status overview for aetre_system_catalog.
-pub fn get_quota_status(tier: LicenseTier) -> Value {
-    let month = current_year_month();
-    let used = get_preflight_usage(&month);
-
-    match tier {
-        LicenseTier::Community => json!({
-            "active_tier": tier.as_str(),
-            "tier_name": tier.display_name(),
-            "current_month": month,
-            "preflight_checks_used": used,
-            "preflight_checks_limit": COMMUNITY_PREFLIGHT_LIMIT,
-            "preflight_checks_remaining": COMMUNITY_PREFLIGHT_LIMIT.saturating_sub(used),
-            "unlocked_tools": [
-                "aetre_system_catalog",
-                "aetre_triage_proposal",
-                "aetre_calculate_voi",
-                "aetre_proposition_1_bound",
-                "aetre_author_preflight_benchmark (3 free/month)"
-            ],
-            "locked_tools": [
-                "aetre_heavy_tailed_voi (VC Enterprise Tier)",
-                "aetre_correlated_posterior_update (Publishers & Enterprise Tier)",
-                "aetre_check_governor (Grant Agencies & Enterprise Tier)",
-                "aetre_heterogeneous_queues (Patent Offices & Enterprise Tier)",
-                "aetre_exploration_audit (Sovereign R&D Tier)",
-                "aetre_quadratic_staking (Accelerators & Enterprise Tier)"
-            ],
-            "upgrade_links": {
-                "commercial_licensing": "https://www.lithiumeel.com/aetre"
-            }
-        }),
-
-        LicenseTier::Pro => json!({
-            "active_tier": tier.as_str(),
-            "tier_name": tier.display_name(),
-            "preflight_checks": "UNLIMITED",
-            "full_prescriptive_plans": "UNLOCKED",
-            "structured_scorecard_export": "UNLOCKED",
-            "lexical_novelty_diagnostics": "UNLOCKED (not a live corpus ranking)",
-            "enterprise_tools_locked": [
-                "aetre_heavy_tailed_voi",
-                "aetre_correlated_posterior_update",
-                "aetre_check_governor",
-                "aetre_heterogeneous_queues",
-                "aetre_exploration_audit",
-                "aetre_quadratic_staking"
-            ],
-            "commercial_licensing": "https://www.lithiumeel.com/aetre"
-        }),
-
-        LicenseTier::Enterprise => json!({
-            "active_tier": tier.as_str(),
-            "tier_name": tier.display_name(),
-            "status": "ALL_20_TOOLS_UNLOCKED",
-            "preflight_checks": "UNLIMITED",
-            "institutional_queue_governor": "UNLOCKED",
-            "multi_agent_debiasing": "UNLOCKED",
-            "exploration_audits": "UNLOCKED",
-            "database_writeback_connectors": "UNLOCKED",
-            "support": "Dedicated Enterprise SLA & Zero-Trust VPC License"
-        }),
-    }
-}
-
-/// Generates a structured Paywall upgrade card when a free user exceeds the 3-check limit.
-pub fn generate_quota_exceeded_payload(
-    title: &str,
-    prior_mean: f64,
-    prior_var: f64,
-    predicted_stream: &str,
-) -> Value {
-    let month = current_year_month();
-    json!({
-        "status": "QUOTA_EXCEEDED",
-        "license_tier": "COMMUNITY_FREE",
-        "message": format!("You have reached your limit of {} free pre-flight checks for {}.", COMMUNITY_PREFLIGHT_LIMIT, month),
-        "proposal_quick_summary": {
-            "title": title,
-            "prior_mean_mu_0": (prior_mean * 100.0).round() / 100.0,
-            "epistemic_variance_sigma_0_sq": (prior_var * 100.0).round() / 100.0,
-            "predicted_triage_stream": predicted_stream
-        },
-        "locked_deep_diagnostics": [
-            "Novelty heuristic diagnostics (model-derived; not a live corpus ranking)",
-            "🔒 Prescriptive Empirical Action Plan & Variance Reduction Roadmap",
-            "🔒 Reviewer Split Risk Vulnerability Analysis (Veto Prevention)",
-            "🔒 Exportable PDF/LaTeX Scorecard Receipt & Verification Hash"
-        ],
-        "upgrade_options": {
-            "commercial_licensing": "Contact https://www.lithiumeel.com/aetre for current terms"
-        },
-        "how_to_activate": "Set your API key in ~/.gemini/config/mcp_config.json or pass 'api_key' argument in tool call."
-    })
-}
-
-/// Generates an Enterprise Tier Locked upgrade card when an institutional tool is called without an Enterprise key.
-pub fn generate_tier_locked_payload(
-    tool_name: &str,
-    feature_title: &str,
-    target_tier: &str,
-) -> Value {
-    json!({
-        "status": "TIER_LOCKED",
-        "tool_name": tool_name,
-        "feature": feature_title,
-        "required_license": target_tier,
-        "message": format!("'{}' is an institutional capability locked on the Community/Pro Tier.", feature_title),
-        "commercial_use_cases": {
-            "venture_capital": "Screening 5,000+ pitch decks for 100x positive black swans without partner consensus averaging bias.",
-            "publishers_agencies": "Kingman heavy-traffic queue throttling, multi-LLM debiasing, and 5% Horvitz-Thompson exploration audits.",
-            "corporate_r_and_d": "Air-gapped on-premise zero-trust invention disclosure portfolio triage."
-        },
-        "upgrade_options": {
-            "pricing": "See the AETRE portal for current plans and terms.",
-            "contact_url": "https://www.lithiumeel.com/aetre"
-        },
-        "how_to_activate": "Add your Enterprise License Key to AETRE_API_KEY environment variable or pass 'api_key' in your MCP tool parameters."
-    })
 }
 
 #[cfg(test)]
@@ -588,12 +413,6 @@ mod tests {
     }
 
     #[test]
-    fn test_current_year_month() {
-        let ym = current_year_month();
-        assert_eq!(ym.len(), 7);
-        assert!(ym.contains('-'));
-    }
-
     #[test]
     fn test_root_public_key_integrity() {
         assert_eq!(ROOT_PUBLIC_KEY_BYTES.len(), 32);
