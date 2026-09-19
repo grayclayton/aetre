@@ -151,7 +151,7 @@ fn handle_http_connection(mut stream: TcpStream) -> std::io::Result<()> {
                         "claude": has_claude,
                         "ollama": true
                     },
-                    "version": "0.1.0"
+                    "version": env!("CARGO_PKG_VERSION")
                 })
                 .to_string()
             }

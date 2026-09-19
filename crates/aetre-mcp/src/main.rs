@@ -180,7 +180,7 @@ fn handle_request(req: JsonRpcRequest) -> Option<JsonRpcResponse> {
                 },
                 "serverInfo": {
                     "name": "aetre-mcp",
-                    "version": "0.1.0"
+                    "version": env!("CARGO_PKG_VERSION")
                 }
             })),
             error: None,
@@ -1886,7 +1886,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
 
                 _ => json!({
                     "system": "AETRE (Adaptive Epistemic Triage & Recall Engine)",
-                    "version": "0.1.0",
+                    "version": env!("CARGO_PKG_VERSION"),
                     "author": "Clayton Gray (2026)",
                     "paper_reference": "The Innovation-Absorption Gap (SSRN: 7161458)",
                     "protocol": "Model Context Protocol (MCP 2024-11-05)",
