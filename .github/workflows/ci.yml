@@ -51,7 +51,7 @@ jobs:
             fi
             sleep 1
           done
-          grep -q '"tools_count":24' /tmp/status.json
+          grep -q '"tools_count":32' /tmp/status.json
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --header 'Content-Type: application/json' \
             --data '{"name":"aetre_system_catalog","arguments":{}}' \
