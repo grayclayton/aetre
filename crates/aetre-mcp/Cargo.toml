@@ -1,11 +1,12 @@
 [package]
 name = "aetre-mcp"
-version = "0.4.1"
+version = "0.4.2"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Model Context Protocol (MCP) server for AETRE epistemic triage, Kingman queue governance, and VOI routing"
 repository.workspace = true
+readme = "README.md"
 keywords = ["mcp", "decision-theory", "queueing", "bayesian", "triage"]
 categories = ["command-line-utilities", "algorithms", "science"]
 

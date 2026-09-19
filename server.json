@@ -3,7 +3,7 @@
   "name": "io.github.grayclayton/aetre-mcp",
   "title": "AETRE & The Governed Agent",
   "description": "Decision-theoretic triage and agent gating: Bayesian value-of-information scoring, Kingman queue governance, and fail-closed execution boundaries across 32 tools.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "websiteUrl": "https://www.lithiumeel.com/aetre",
   "repository": {
     "url": "https://github.com/grayclayton/aetre",
@@ -11,9 +11,17 @@
   },
   "packages": [
     {
+      "registryType": "cargo",
+      "identifier": "aetre-mcp",
+      "version": "0.4.2",
+      "transport": {
+        "type": "stdio"
+      }
+    },
+    {
       "registryType": "oci",
-      "identifier": "ghcr.io/grayclayton/aetre-mcp:0.4.1",
-      "version": "0.4.1",
+      "identifier": "ghcr.io/grayclayton/aetre-mcp:0.4.2",
+      "version": "0.4.2",
       "transport": {
         "type": "stdio"
       },

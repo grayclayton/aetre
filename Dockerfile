@@ -29,6 +29,10 @@ RUN cp /app/aetre-mcp /usr/local/bin/aetre-mcp && chmod +x /app/aetre-mcp /usr/l
 # MCP clients speak stdio to this same binary.
 EXPOSE 8080
 
+# The MCP Registry verifies ownership of an OCI image through this label,
+# which must match the name in server.json exactly.
+LABEL io.modelcontextprotocol.server.name="io.github.grayclayton/aetre-mcp"
+
 ENV RUST_LOG=info
 ENV AETRE_BIND_ADDRESS=0.0.0.0
 

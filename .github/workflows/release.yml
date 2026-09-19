@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write
 
 jobs:
   build-release:
@@ -45,3 +46,20 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/aetre-mcp:${{ github.ref_name }}
             ghcr.io/${{ github.repository_owner }}/aetre-mcp:latest
+
+  publish-registry:
+    # Lists the server so clients and directories can find it. Runs after the
+    # crate and image exist, because the registry verifies both: the cargo
+    # package through an mcp-name token in the crate README, the image through
+    # its io.modelcontextprotocol.server.name label.
+    needs: publish-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the publisher
+        run: |
+          curl -sSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz"             | tar xz mcp-publisher
+      - name: Log in with GitHub OIDC
+        run: ./mcp-publisher login github-oidc
+      - name: Publish
+        run: ./mcp-publisher publish
