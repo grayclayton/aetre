@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.grayclayton/aetre-mcp",
   "title": "AETRE & The Governed Agent",
-  "description": "Decision-theoretic triage and agent gating: Bayesian value-of-information scoring, Kingman queue governance, and fail-closed execution boundaries across 32 tools.",
+  "description": "Decision-theoretic triage and fail-closed agent gating: 32 tools over stdio.",
   "version": "0.4.2",
   "websiteUrl": "https://www.lithiumeel.com/aetre",
   "repository": {
