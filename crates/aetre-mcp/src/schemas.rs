@@ -68,6 +68,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "posterior_mean": {
                         "type": "number",
                         "description": "Current expected latent quality (mu)."
@@ -196,6 +197,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "total_candidates": {
                         "type": "integer",
                         "description": "Total candidate arrival volume (N)."
@@ -222,6 +224,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "prior_mean": {
                         "type": "number",
                         "description": "Prior mean of candidate quality (mu_0)."
@@ -261,6 +264,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "posterior_mean": {
                         "type": "number",
                         "description": "Current expected candidate quality (mu)."
@@ -459,6 +463,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "baseline_arrivals": {
                         "type": "integer",
                         "description": "Baseline candidate arrivals N (default: 1000)."
@@ -640,6 +645,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "prior_mean": {
                         "type": "number",
                         "description": "Baseline prior mean quality (e.g. 5.0)."
@@ -710,6 +716,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "belief": { "type": "number", "description": "Current posterior belief probability in [0, 1]." },
                     "reward": { "type": "number", "description": "Conforming net reward R (default: 0.02)." },
                     "loss": { "type": "number", "description": "Defective loss penalty L (default: 0.10)." },
@@ -769,6 +776,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "action_name": { "type": "string", "description": "Identifier for the candidate agent action." },
                     "consequence_distribution": {
                         "type": "object",
@@ -827,6 +835,7 @@ pub(crate) fn all_tools() -> Value {
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "prior_source": { "type": "string", "description": "Where the estimates in this call came from, e.g. \"measured: 2026 cycle\", \"expert elicitation\", \"assumed\". Echoed in the result so a reader can tell a measurement from a guess." },
                     "queue_backlog": { "type": "number", "description": "Number of candidates awaiting review." },
                     "reviewer_headcount": { "type": "number", "description": "Number of available reviewers." },
                     "reviews_per_reviewer": { "type": "number", "description": "Review slots per reviewer in the period. Defaults to 8." },

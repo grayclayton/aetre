@@ -88,6 +88,71 @@ Accepted: {}.",
     }))
 }
 
+/// Records, in the result, where the caller's estimates came from and which
+/// arguments they never supplied.
+///
+/// A tool that takes a prior returns the same confident numbers whether the
+/// prior was measured or invented, and a model filling a well-specified schema
+/// will invent one readily. `prior_source` is what the caller claims;
+/// `defaulted_arguments` is what actually happened, which cannot be overstated.
+fn annotate_provenance(name: &str, args: &Value, mut result: Value) -> Value {
+    if result.get("isError").and_then(Value::as_bool) == Some(true) {
+        return result;
+    }
+    let tools = crate::schemas::all_tools();
+    let Some(tool) = tools.as_array().and_then(|a| {
+        a.iter()
+            .find(|t| t.get("name").and_then(|n| n.as_str()) == Some(name))
+    }) else {
+        return result;
+    };
+    let declares_prior_source = tool
+        .pointer("/inputSchema/properties/prior_source")
+        .is_some();
+    if !declares_prior_source {
+        return result;
+    }
+
+    let empty = serde_json::Map::new();
+    let supplied = args.as_object().unwrap_or(&empty);
+    let mut defaulted: Vec<String> = tool
+        .pointer("/inputSchema/properties")
+        .and_then(Value::as_object)
+        .map(|props| {
+            props
+                .keys()
+                .filter(|k| k.as_str() != "api_key" && k.as_str() != "prior_source")
+                .filter(|k| !supplied.contains_key(k.as_str()))
+                .cloned()
+                .collect()
+        })
+        .unwrap_or_default();
+    defaulted.sort();
+
+    let stated = supplied
+        .get("prior_source")
+        .and_then(Value::as_str)
+        .unwrap_or("unstated: the caller did not say where these estimates came from");
+
+    // The payload is JSON inside a text block; annotate it there if we can.
+    let Some(text) = result.pointer("/content/0/text").and_then(Value::as_str) else {
+        return result;
+    };
+    let Ok(mut body) = serde_json::from_str::<Value>(text) else {
+        return result;
+    };
+    if let Some(map) = body.as_object_mut() {
+        map.insert("prior_source".into(), json!(stated));
+        if !defaulted.is_empty() {
+            map.insert("defaulted_arguments".into(), json!(defaulted));
+        }
+    }
+    if let Some(slot) = result.pointer_mut("/content/0/text") {
+        *slot = json!(serde_json::to_string_pretty(&body).unwrap_or_default());
+    }
+    result
+}
+
 pub fn call_tool(name: &str, args: Value) -> Value {
     let layer = active_layer();
     if !tool_in_layer(name, layer) {
@@ -106,6 +171,11 @@ pub fn call_tool(name: &str, args: Value) -> Value {
         return rejection;
     }
 
+    let result = dispatch_tool(name, args.clone());
+    annotate_provenance(name, &args, result)
+}
+
+fn dispatch_tool(name: &str, args: Value) -> Value {
     let tier = get_license_tier(&args);
     match name {
         "aetre_system_catalog" => {
@@ -2144,5 +2214,51 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             ],
             "isError": true
         }),
+    }
+}
+
+#[cfg(test)]
+mod provenance_tests {
+    use super::*;
+
+    fn body(result: &Value) -> Value {
+        serde_json::from_str(result.pointer("/content/0/text").unwrap().as_str().unwrap()).unwrap()
+    }
+
+    #[test]
+    fn unstated_source_and_defaults_are_recorded() {
+        let out = call_tool(
+            "governed_review_boundary",
+            json!({ "belief": 0.7, "reward": 0.05, "loss": 0.3 }),
+        );
+        let b = body(&out);
+        assert!(b["prior_source"].as_str().unwrap().starts_with("unstated"));
+        // The caller supplied three of six; the rest must be named.
+        let defaulted = b["defaulted_arguments"].as_array().unwrap();
+        assert!(defaulted.iter().any(|v| v == "review_cost"));
+    }
+
+    #[test]
+    fn a_stated_source_is_echoed_and_nothing_is_defaulted() {
+        let out = call_tool(
+            "governed_review_boundary",
+            json!({
+                "belief": 0.7, "reward": 0.05, "loss": 0.3, "review_cost": 0.02,
+                "shadow_price_lambda": 0.0, "review_accuracy": 0.9,
+                "prior_source": "measured: 2026 cycle"
+            }),
+        );
+        let b = body(&out);
+        assert_eq!(b["prior_source"], "measured: 2026 cycle");
+        assert!(b.get("defaulted_arguments").is_none());
+    }
+
+    #[test]
+    fn tools_without_estimates_are_left_alone() {
+        let out = call_tool(
+            "aetre_check_governor",
+            json!({ "arrival_rate": 96.0, "service_rate": 100.0 }),
+        );
+        assert!(body(&out).get("prior_source").is_none());
     }
 }
