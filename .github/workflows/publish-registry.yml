@@ -25,6 +25,24 @@ jobs:
       - name: Point server.json at the crate version
         run: python3 scripts/sync-server-json.py
 
+      - name: Wait for the image server.json names
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref=$(python3 -c "import json; p=[x for x in json.load(open('server.json'))['packages'] if x['registryType']=='oci']; print(p[0]['identifier'] if p else '')")
+          if [ -z "$ref" ]; then echo "no OCI package declared; nothing to wait for"; exit 0; fi
+          repo="${ref%:*}"; tag="${ref##*:}"; path="${repo#ghcr.io/}"
+          echo "waiting for $ref"
+          for attempt in $(seq 1 30); do
+            token=$(curl -sf "https://ghcr.io/token?scope=repository:${path}:pull&service=ghcr.io" | python3 -c "import json,sys; print(json.load(sys.stdin)['token'])")
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $token"               -H 'Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.v2+json'               "https://ghcr.io/v2/${path}/manifests/${tag}")
+            if [ "$code" = "200" ]; then echo "present after ${attempt} attempt(s)"; exit 0; fi
+            echo "  attempt ${attempt}: HTTP ${code}, retrying"
+            sleep 20
+          done
+          echo "image never appeared; the release workflow may have failed" >&2
+          exit 1
+
       - name: Log in with GitHub OIDC
         run: ./mcp-publisher login github-oidc
       - name: Publish
