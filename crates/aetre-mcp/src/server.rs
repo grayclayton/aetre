@@ -1,11 +1,47 @@
 use serde_json::{json, Value};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
 const MAX_REQUEST_BODY_BYTES: usize = 1024 * 1024;
 const READ_TIMEOUT: Duration = Duration::from_secs(10);
+/// A thread per connection with no ceiling is the failure that takes the host
+/// down with it, so past this many in flight we refuse rather than queue.
+const MAX_CONCURRENT_CONNECTIONS: usize = 64;
+
+/// Decrements the in-flight count however the handler leaves, panic included.
+struct ConnectionGuard(Arc<AtomicUsize>);
+
+impl Drop for ConnectionGuard {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+/// Compares a presented token against the expected one without returning early
+/// at the first differing byte.
+fn token_matches(presented: Option<&str>, expected: &str) -> bool {
+    let presented = match presented {
+        Some(value) => value.as_bytes(),
+        None => return false,
+    };
+    let expected = expected.as_bytes();
+
+    let mut difference: u8 = if presented.len() == expected.len() {
+        0
+    } else {
+        1
+    };
+    for i in 0..presented.len().max(expected.len()) {
+        let a = presented.get(i).copied().unwrap_or(0);
+        let b = expected.get(i).copied().unwrap_or(0);
+        difference |= a ^ b;
+    }
+    difference == 0
+}
 
 pub fn start_embedded_server(
     default_port: u16,
@@ -30,9 +66,24 @@ pub fn start_embedded_server(
     eprintln!(" Mode:         High-Performance Operations Research Core");
     eprintln!("======================================================");
 
+    let in_flight = Arc::new(AtomicUsize::new(0));
     thread::spawn(move || {
-        for stream in listener.incoming().flatten() {
-            thread::spawn(|| {
+        for mut stream in listener.incoming().flatten() {
+            if in_flight.fetch_add(1, Ordering::SeqCst) >= MAX_CONCURRENT_CONNECTIONS {
+                in_flight.fetch_sub(1, Ordering::SeqCst);
+                let _ = stream.write_all(
+                    b"HTTP/1.1 503 Service Unavailable
+Retry-After: 1
+Content-Length: 0
+Connection: close
+
+",
+                );
+                continue;
+            }
+            let guard = ConnectionGuard(Arc::clone(&in_flight));
+            thread::spawn(move || {
+                let _guard = guard;
                 let _ = handle_http_connection(stream);
             });
         }
@@ -221,7 +272,7 @@ fn handle_http_connection(mut stream: TcpStream) -> std::io::Result<()> {
 
     if method == "POST" {
         if let Ok(expected_token) = std::env::var("AETRE_HTTP_SERVER_TOKEN") {
-            if server_token != Some(expected_token.as_str()) {
+            if !token_matches(server_token, &expected_token) {
                 stream.write_all(
                     b"HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
                 )?;
@@ -339,4 +390,28 @@ fn handle_http_connection(mut stream: TcpStream) -> std::io::Result<()> {
     let response = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
     stream.write_all(response.as_bytes())?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::token_matches;
+
+    #[test]
+    fn token_matches_only_on_exact_equality() {
+        assert!(token_matches(Some("s3cret-token"), "s3cret-token"));
+        assert!(!token_matches(Some("s3cret-tokeN"), "s3cret-token"));
+        assert!(!token_matches(Some("s3cret-token-longer"), "s3cret-token"));
+        assert!(!token_matches(Some("s3cret"), "s3cret-token"));
+        assert!(!token_matches(Some(""), "s3cret-token"));
+        assert!(!token_matches(None, "s3cret-token"));
+    }
+
+    #[test]
+    fn token_length_difference_is_not_lost_to_truncation() {
+        // A naive `(a.len() ^ b.len()) as u8` collapses these two to zero.
+        let short = "a";
+        let long = "a".repeat(257);
+        assert!(!token_matches(Some(short), &long));
+        assert!(!token_matches(Some(&long), short));
+    }
 }
