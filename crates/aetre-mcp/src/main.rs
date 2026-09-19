@@ -878,6 +878,52 @@ pub fn get_prompt(name: &str, args: Value) -> Result<Value, String> {
     }
 }
 
+pub fn get_f64_array(args: &Value, key: &str) -> Vec<f64> {
+    args.get(key)
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| {
+                    x.as_f64()
+                        .or_else(|| x.as_str().and_then(|s| s.parse().ok()))
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// RFC 3339 UTC timestamp without taking on a date/time dependency.
+/// Civil-from-days is Howard Hinnant's algorithm.
+pub fn utc_timestamp_rfc3339() -> String {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+
+    let days = secs.div_euclid(86_400);
+    let time_of_day = secs.rem_euclid(86_400);
+
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + if month <= 2 { 1 } else { 0 };
+
+    format!(
+        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+        year,
+        month,
+        day,
+        time_of_day / 3_600,
+        (time_of_day % 3_600) / 60,
+        time_of_day % 60
+    )
+}
+
 pub fn list_tools() -> Value {
     json!([
         {
@@ -1623,6 +1669,115 @@ pub fn list_tools() -> Value {
                     "api_key": { "type": "string", "description": "Optional license key." }
                 },
                 "required": ["code"]
+            }
+        },
+        {
+            "name": "governed_evaluate_action",
+            "description": "Micro-level loss evaluation comparing autonomous execution against deferral to human review, under an asymmetric loss matrix weighted by irreversibility.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "action_name": { "type": "string", "description": "Identifier for the candidate agent action." },
+                    "consequence_distribution": {
+                        "type": "object",
+                        "description": "Distribution over the consequences of acting autonomously.",
+                        "properties": {
+                            "p_failure": { "type": "number", "description": "Probability the action is wrong (0-1)." },
+                            "severity_mean": { "type": "number", "description": "Mean loss conditional on failure." },
+                            "severity_std": { "type": "number", "description": "Standard deviation of that loss." },
+                            "reversibility": { "type": "number", "description": "Fraction of the loss recoverable after the fact (0-1)." }
+                        }
+                    },
+                    "review_cost": { "type": "number", "description": "Cost of deferring the action to a human reviewer." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["consequence_distribution"]
+            }
+        },
+        {
+            "name": "governed_stopping_policy",
+            "description": "Solves the finite-horizon optimal stopping problem by backward induction: at each step the agent either takes the terminal payoff or pays the continuation cost for one more step of evidence.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "horizon_steps": { "type": "integer", "description": "Number of steps in the lattice. Defaults to the length of terminal_payoffs." },
+                    "cost_per_step": { "type": "number", "description": "Cost charged for each additional step of evidence gathering." },
+                    "terminal_payoffs": {
+                        "type": "array",
+                        "items": { "type": "number" },
+                        "description": "Payoff from stopping at each step. The last value is carried forward if shorter than the horizon."
+                    },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["terminal_payoffs"]
+            }
+        },
+        {
+            "name": "governed_invariant_check",
+            "description": "Evaluates declarative safety invariants against a runtime state snapshot before a state change is committed, returning every violated rule rather than the first.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "state_snapshot": { "type": "object", "description": "Flat object of runtime state fields to test." },
+                    "invariant_rules": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "Rules of the form '<field> <op> <number>' with op in <=, <, >=, >, ==, != , or 'exists <field>'."
+                    },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["state_snapshot", "invariant_rules"]
+            }
+        },
+        {
+            "name": "governed_shadow_price",
+            "description": "Computes the marginal shadow price of scarce reviewer time (lambda_K) from queue backlog and review capacity under a heavy-tailed utility distribution, and the factor by which it elevates the admission cutoff.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "queue_backlog": { "type": "number", "description": "Number of candidates awaiting review." },
+                    "reviewer_headcount": { "type": "number", "description": "Number of available reviewers." },
+                    "reviews_per_reviewer": { "type": "number", "description": "Review slots per reviewer in the period. Defaults to 8." },
+                    "tail_index_alpha": { "type": "number", "description": "Pareto tail index of the utility distribution. Defaults to 1.25." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["queue_backlog", "reviewer_headcount"]
+            }
+        },
+        {
+            "name": "governed_recall_scaling",
+            "description": "Fits the recall saturation curve Recall(K) = 1 - exp(-gamma K) to observed budget and recall pairs by least squares, returning the fitted gamma and the budget beyond which marginal recall stops paying for itself.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "historical_budget_K": {
+                        "type": "array",
+                        "items": { "type": "number" },
+                        "description": "Observed review budgets."
+                    },
+                    "recall_points": {
+                        "type": "array",
+                        "items": { "type": "number" },
+                        "description": "Recall achieved at each budget (0-1), positionally paired with historical_budget_K."
+                    },
+                    "marginal_recall_threshold": { "type": "number", "description": "Marginal recall per unit budget below which spending stops. Defaults to 0.001." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["historical_budget_K", "recall_points"]
+            }
+        },
+        {
+            "name": "governed_runtime_audit",
+            "description": "Generates a tamper-evident SHA-256 decision receipt over an execution's identifier, payload and timestamp, so a gated agent action can be verified after the fact.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "execution_id": { "type": "string", "description": "Identifier of the agent execution being recorded." },
+                    "decision_payload": { "type": "object", "description": "The decision record to bind into the receipt." },
+                    "include_posterior_trace": { "type": "boolean", "description": "Echo the posterior trace from the payload into the receipt." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["execution_id"]
             }
         }
     ])
@@ -3386,6 +3541,380 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             })
         }
 
+        "governed_evaluate_action" => {
+            let action_name = get_str(&args, "action_name", "unnamed_action");
+            let dist = args
+                .get("consequence_distribution")
+                .cloned()
+                .unwrap_or_else(|| json!({}));
+
+            let p_failure = get_f64(&dist, "p_failure", 0.05).clamp(0.0, 1.0);
+            let severity_mean = get_f64(&dist, "severity_mean", 1.0).max(0.0);
+            let severity_std = get_f64(&dist, "severity_std", 0.0).max(0.0);
+            let reversibility = get_f64(&dist, "reversibility", 0.5).clamp(0.0, 1.0);
+            let review_cost = get_f64(&args, "review_cost", 0.002).max(0.0);
+
+            // Only the unrecoverable share of the loss is a reason to defer.
+            let unrecoverable = 1.0 - reversibility;
+            let expected_loss = p_failure * severity_mean * unrecoverable;
+            let tail_loss = p_failure * (severity_mean + 1.645 * severity_std) * unrecoverable;
+
+            let requires_human_signoff = expected_loss > review_cost;
+            let risk_tier = if tail_loss < 0.01 {
+                "LOW"
+            } else if tail_loss < 0.05 {
+                "MODERATE"
+            } else if tail_loss < 0.25 {
+                "ELEVATED"
+            } else {
+                "CRITICAL"
+            };
+
+            let out = json!({
+                "action_name": action_name,
+                "risk_tier": risk_tier,
+                "requires_human_signoff": requires_human_signoff,
+                "expected_loss_autonomous": (expected_loss * 1_000_000.0).round() / 1_000_000.0,
+                "tail_loss_p95": (tail_loss * 1_000_000.0).round() / 1_000_000.0,
+                "deferral_cost": review_cost,
+                "unrecoverable_fraction": unrecoverable,
+                "rationale": if requires_human_signoff {
+                    "Expected unrecoverable loss exceeds the cost of human review: defer."
+                } else {
+                    "Expected unrecoverable loss is below the cost of human review: execute autonomously."
+                }
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_stopping_policy" => {
+            let cost_per_step = get_f64(&args, "cost_per_step", 0.0).max(0.0);
+            let payoffs = get_f64_array(&args, "terminal_payoffs");
+
+            if payoffs.is_empty() {
+                return json!({
+                    "content": [{ "type": "text", "text": "terminal_payoffs must contain at least one value." }],
+                    "isError": true
+                });
+            }
+
+            let horizon = match get_usize(&args, "horizon_steps", 0) {
+                0 => payoffs.len() - 1,
+                h => h.min(512),
+            };
+
+            // The last supplied payoff is carried forward past the end of the vector.
+            let payoff_at = |t: usize| payoffs[t.min(payoffs.len() - 1)];
+
+            let mut values = vec![0.0_f64; horizon + 1];
+            let mut stop_here = vec![true; horizon + 1];
+            values[horizon] = payoff_at(horizon);
+
+            for t in (0..horizon).rev() {
+                let continuation = values[t + 1] - cost_per_step;
+                let stopping = payoff_at(t);
+                if stopping >= continuation {
+                    values[t] = stopping;
+                    stop_here[t] = true;
+                } else {
+                    values[t] = continuation;
+                    stop_here[t] = false;
+                }
+            }
+
+            let optimal_stopping_step = stop_here.iter().position(|&s| s).unwrap_or(horizon);
+            let round = |v: f64| (v * 1_000_000.0).round() / 1_000_000.0;
+
+            let out = json!({
+                "horizon_steps": horizon,
+                "cost_per_step": cost_per_step,
+                "optimal_stopping_step": optimal_stopping_step,
+                "expected_net_payoff": round(values[0]),
+                "value_function": values.iter().map(|v| round(*v)).collect::<Vec<f64>>(),
+                "stop_at_step": stop_here,
+                "policy_rationale": if optimal_stopping_step == 0 {
+                    "Stopping immediately dominates: no step of evidence pays for its own cost."
+                } else {
+                    "Continuation dominates until the marginal step stops covering cost_per_step."
+                }
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_invariant_check" => {
+            let state = args
+                .get("state_snapshot")
+                .cloned()
+                .unwrap_or_else(|| json!({}));
+            let rules: Vec<String> = args
+                .get("invariant_rules")
+                .and_then(|v| v.as_array())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
+                .unwrap_or_default();
+
+            let mut violated: Vec<String> = Vec::new();
+            let mut unparsed: Vec<String> = Vec::new();
+            let mut evaluated: Vec<Value> = Vec::new();
+
+            for rule in &rules {
+                let parts: Vec<&str> = rule.split_whitespace().collect();
+
+                if parts.len() == 2 && parts[0].eq_ignore_ascii_case("exists") {
+                    let present = state.get(parts[1]).is_some();
+                    if !present {
+                        violated.push(rule.clone());
+                    }
+                    evaluated
+                        .push(json!({ "rule": rule, "passed": present, "actual": Value::Null }));
+                    continue;
+                }
+
+                if parts.len() != 3 {
+                    unparsed.push(rule.clone());
+                    continue;
+                }
+
+                let bound: f64 = match parts[2].parse() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        unparsed.push(rule.clone());
+                        continue;
+                    }
+                };
+
+                // A rule about a field the snapshot does not carry is a violation,
+                // not something to pass silently.
+                let actual = match state.get(parts[0]).and_then(|v| v.as_f64()) {
+                    Some(v) => v,
+                    None => {
+                        violated.push(rule.clone());
+                        evaluated
+                            .push(json!({ "rule": rule, "passed": false, "actual": Value::Null }));
+                        continue;
+                    }
+                };
+
+                let passed = match parts[1] {
+                    "<=" => actual <= bound,
+                    "<" => actual < bound,
+                    ">=" => actual >= bound,
+                    ">" => actual > bound,
+                    "==" => (actual - bound).abs() < 1e-9,
+                    "!=" => (actual - bound).abs() >= 1e-9,
+                    _ => {
+                        unparsed.push(rule.clone());
+                        continue;
+                    }
+                };
+
+                if !passed {
+                    violated.push(rule.clone());
+                }
+                evaluated.push(json!({ "rule": rule, "passed": passed, "actual": actual }));
+            }
+
+            let valid = violated.is_empty() && unparsed.is_empty();
+            let out = json!({
+                "valid": valid,
+                "violated_invariants": violated,
+                "unparsed_rules": unparsed,
+                "rules_evaluated": evaluated,
+                "gate_decision": if valid { "COMMIT" } else { "BLOCK" }
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_shadow_price" => {
+            let backlog = get_f64(&args, "queue_backlog", 0.0).max(0.0);
+            let headcount = get_f64(&args, "reviewer_headcount", 0.0).max(0.0);
+            let per_reviewer = get_f64(&args, "reviews_per_reviewer", 8.0).max(0.0);
+            let alpha = get_f64(&args, "tail_index_alpha", 1.25).max(0.01);
+
+            let capacity = headcount * per_reviewer;
+            if capacity <= 0.0 {
+                return json!({
+                    "content": [{ "type": "text", "text": "reviewer_headcount and reviews_per_reviewer must give a capacity above zero." }],
+                    "isError": true
+                });
+            }
+
+            let utilization = backlog / capacity;
+
+            // Under Pareto(alpha) the utility of the K-th best of N candidates scales as
+            // (N/K)^(1/alpha). Below capacity nothing is scarce, so lambda is zero.
+            let lambda = if backlog <= capacity {
+                0.0
+            } else {
+                utilization.powf(1.0 / alpha) - 1.0
+            };
+
+            let out = json!({
+                "review_capacity_K": capacity,
+                "queue_backlog": backlog,
+                "utilization_rho": (utilization * 10_000.0).round() / 10_000.0,
+                "shadow_price_lambda": (lambda * 1_000_000.0).round() / 1_000_000.0,
+                "cutoff_elevation_factor": ((1.0 + lambda) * 1_000_000.0).round() / 1_000_000.0,
+                "tail_index_alpha": alpha,
+                "interpretation": if lambda <= 0.0 {
+                    "Capacity exceeds backlog: reviewer time is not scarce and the admission cutoff is unshifted."
+                } else {
+                    "Reviewer time is scarce: admit only candidates whose net VOI clears the elevated cutoff."
+                }
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_recall_scaling" => {
+            let budgets = get_f64_array(&args, "historical_budget_K");
+            let recalls = get_f64_array(&args, "recall_points");
+            let threshold = get_f64(&args, "marginal_recall_threshold", 0.001).max(1e-9);
+
+            let pairs = budgets.len().min(recalls.len());
+            if pairs == 0 {
+                return json!({
+                    "content": [{ "type": "text", "text": "historical_budget_K and recall_points must both be non-empty." }],
+                    "isError": true
+                });
+            }
+
+            // Linearise Recall(K) = 1 - exp(-gamma K) as -ln(1 - R) = gamma K, then fit
+            // least squares through the origin.
+            let mut numerator = 0.0;
+            let mut denominator = 0.0;
+            let mut linearised: Vec<(f64, f64)> = Vec::new();
+
+            for i in 0..pairs {
+                let k = budgets[i];
+                if k <= 0.0 {
+                    continue;
+                }
+                let r = recalls[i].clamp(0.0, 0.999);
+                let y = -(1.0 - r).ln();
+                numerator += k * y;
+                denominator += k * k;
+                linearised.push((k, y));
+            }
+
+            if denominator <= 0.0 {
+                return json!({
+                    "content": [{ "type": "text", "text": "historical_budget_K must contain at least one positive budget." }],
+                    "isError": true
+                });
+            }
+
+            let gamma = numerator / denominator;
+
+            let mean_y = linearised.iter().map(|(_, y)| *y).sum::<f64>() / linearised.len() as f64;
+            let ss_tot: f64 = linearised.iter().map(|(_, y)| (y - mean_y).powi(2)).sum();
+            let ss_res: f64 = linearised
+                .iter()
+                .map(|(k, y)| (y - gamma * k).powi(2))
+                .sum();
+            let r_squared = if ss_tot > 0.0 {
+                1.0 - ss_res / ss_tot
+            } else {
+                1.0
+            };
+
+            // dR/dK = gamma exp(-gamma K); spending stops where that falls under threshold.
+            let optimal_budget = if gamma > threshold {
+                (gamma / threshold).ln() / gamma
+            } else {
+                0.0
+            };
+            let predicted_recall = 1.0 - (-gamma * optimal_budget).exp();
+            let round = |v: f64| (v * 1_000_000.0).round() / 1_000_000.0;
+
+            let out = json!({
+                "fitted_gamma": round(gamma),
+                "optimal_budget_point": round(optimal_budget),
+                "predicted_recall_at_optimum": round(predicted_recall),
+                "r_squared": round(r_squared),
+                "samples_used": linearised.len(),
+                "marginal_recall_threshold": threshold,
+                "model": "Recall(K) = 1 - exp(-gamma K)"
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
+        "governed_runtime_audit" => {
+            let execution_id = get_str(&args, "execution_id", "");
+            if execution_id.is_empty() {
+                return json!({
+                    "content": [{ "type": "text", "text": "execution_id is required." }],
+                    "isError": true
+                });
+            }
+
+            let include_trace = get_bool(&args, "include_posterior_trace", false);
+            let payload = args
+                .get("decision_payload")
+                .cloned()
+                .unwrap_or_else(|| json!({}));
+            let timestamp = utc_timestamp_rfc3339();
+
+            let receipt = json!({
+                "execution_id": execution_id,
+                "decision_payload": payload,
+                "timestamp": timestamp
+            });
+            let canonical = serde_json::to_string(&receipt).unwrap_or_default();
+
+            let mut hasher = Sha256::new();
+            hasher.update(canonical.as_bytes());
+            let proof_hash = hasher
+                .finalize()
+                .iter()
+                .map(|b| format!("{:02x}", b))
+                .collect::<String>();
+
+            let mut out = json!({
+                "execution_id": execution_id,
+                "proof_hash": proof_hash,
+                "timestamp": timestamp,
+                "verified": true,
+                "algorithm": "SHA-256",
+                "canonical_bytes": canonical.len(),
+                "verification_note": "Recompute SHA-256 over {execution_id, decision_payload, timestamp} to verify."
+            });
+
+            if include_trace {
+                out["posterior_trace"] = payload
+                    .get("posterior_trace")
+                    .cloned()
+                    .unwrap_or_else(|| json!([]));
+            }
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
         _ => json!({
             "content": [
                 {
@@ -3406,7 +3935,7 @@ mod tests {
     fn test_list_tools() {
         let tools = list_tools();
         let arr = tools.as_array().unwrap();
-        assert_eq!(arr.len(), 24);
+        assert_eq!(arr.len(), 30);
     }
 
     #[test]
