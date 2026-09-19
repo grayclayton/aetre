@@ -95,6 +95,15 @@ struct JsonRpcError {
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
+
+    match layer_from_args(&args) {
+        Ok(layer) => set_layer(layer),
+        Err(message) => {
+            eprintln!("ERROR: {message}");
+            std::process::exit(2);
+        }
+    }
+
     let has_explicit_http_env =
         std::env::var("AETRE_HTTP_SERVER_TOKEN").is_ok() || std::env::var("PORT").is_ok();
     let http_requested_by_flag = args
@@ -922,7 +931,79 @@ pub fn utc_timestamp_rfc3339() -> String {
     )
 }
 
+// ----------------------------------------------------------------------------
+// Tool layer selection
+// ----------------------------------------------------------------------------
+// Every tool's schema enters the client's context on connection, so a CI job
+// that only gates pull requests should not have to carry the twenty-two
+// portfolio tools it will never call. The layers are the two halves of the
+// system, selected with --layer=macro or --layer=micro; the default exposes
+// both.
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Layer {
+    All,
+    Macro,
+    Micro,
+}
+
+static LAYER: std::sync::OnceLock<Layer> = std::sync::OnceLock::new();
+
+pub fn set_layer(layer: Layer) {
+    let _ = LAYER.set(layer);
+}
+
+pub fn active_layer() -> Layer {
+    *LAYER.get().unwrap_or(&Layer::All)
+}
+
+/// Parses --layer=macro, --layer macro, or their absence.
+pub fn layer_from_args(args: &[String]) -> Result<Layer, String> {
+    let mut requested: Option<&str> = None;
+    for (i, arg) in args.iter().enumerate() {
+        if let Some(value) = arg.strip_prefix("--layer=") {
+            requested = Some(value);
+        } else if arg == "--layer" {
+            requested = args.get(i + 1).map(String::as_str);
+        }
+    }
+    match requested {
+        None => Ok(Layer::All),
+        Some("all") => Ok(Layer::All),
+        Some("macro") => Ok(Layer::Macro),
+        Some("micro") => Ok(Layer::Micro),
+        Some(other) => Err(format!(
+            "unknown --layer '{other}': expected macro, micro or all"
+        )),
+    }
+}
+
+/// Whether a tool belongs to the active layer. Names outside both prefixes are
+/// left alone so an unknown tool still reports as unknown.
+pub fn tool_in_layer(name: &str, layer: Layer) -> bool {
+    match layer {
+        Layer::All => true,
+        Layer::Macro => !name.starts_with("governed_"),
+        Layer::Micro => !name.starts_with("aetre_"),
+    }
+}
+
 pub fn list_tools() -> Value {
+    let layer = active_layer();
+    let mut tools = all_tools();
+    if layer != Layer::All {
+        if let Some(list) = tools.as_array_mut() {
+            list.retain(|t| {
+                t.get("name")
+                    .and_then(|n| n.as_str())
+                    .is_some_and(|n| tool_in_layer(n, layer))
+            });
+        }
+    }
+    tools
+}
+
+fn all_tools() -> Value {
     json!([
         {
             "name": "aetre_system_catalog",
@@ -1816,6 +1897,19 @@ pub fn list_tools() -> Value {
 }
 
 pub fn call_tool(name: &str, args: Value) -> Value {
+    let layer = active_layer();
+    if !tool_in_layer(name, layer) {
+        return json!({
+            "content": [{
+                "type": "text",
+                "text": format!(
+                    "Tool {name} is not exposed: this server was started with --layer={}.",
+                    match layer { Layer::Macro => "macro", Layer::Micro => "micro", Layer::All => "all" }
+                )
+            }],
+            "isError": true
+        });
+    }
     let tier = get_license_tier(&args);
     match name {
         "aetre_system_catalog" => {
@@ -4314,5 +4408,54 @@ mod tests {
         assert!(text_bad.contains("HALT_AND_REJECT"));
         assert!(text_bad.contains("\"passed\": false"));
         assert!(text_bad.contains("Unclosed parenthesis"));
+    }
+}
+
+#[cfg(test)]
+mod layer_tests {
+    use super::*;
+
+    fn args(list: &[&str]) -> Vec<String> {
+        list.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn layer_parses_both_spellings_and_defaults_to_all() {
+        assert_eq!(layer_from_args(&args(&["aetre-mcp"])).unwrap(), Layer::All);
+        assert_eq!(
+            layer_from_args(&args(&["aetre-mcp", "--layer=micro"])).unwrap(),
+            Layer::Micro
+        );
+        assert_eq!(
+            layer_from_args(&args(&["aetre-mcp", "--layer", "macro"])).unwrap(),
+            Layer::Macro
+        );
+        assert!(layer_from_args(&args(&["aetre-mcp", "--layer=sideways"])).is_err());
+    }
+
+    #[test]
+    fn layers_partition_the_tools_and_leave_unknown_names_alone() {
+        let names: Vec<String> = all_tools()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|t| t["name"].as_str().unwrap().to_string())
+            .collect();
+
+        let macro_count = names
+            .iter()
+            .filter(|n| tool_in_layer(n, Layer::Macro))
+            .count();
+        let micro_count = names
+            .iter()
+            .filter(|n| tool_in_layer(n, Layer::Micro))
+            .count();
+        assert_eq!(macro_count + micro_count, names.len());
+        assert_eq!(macro_count, 22);
+        assert_eq!(micro_count, 10);
+
+        // An unknown tool must stay unknown rather than become "not exposed".
+        assert!(tool_in_layer("does_not_exist", Layer::Macro));
+        assert!(tool_in_layer("does_not_exist", Layer::Micro));
     }
 }
