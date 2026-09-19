@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   build-release:
@@ -24,3 +25,23 @@ jobs:
         with:
           name: AETRE MCP ${{ github.ref_name }}
           files: target/release/aetre-mcp
+
+  publish-image:
+    # The OCI package the MCP registry entry points at. Built from the same tag
+    # as the binary above so server.json never names an image that is not there.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/aetre-mcp:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/aetre-mcp:latest

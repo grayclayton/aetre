@@ -64,6 +64,20 @@ jobs:
             http://127.0.0.1:8080/api/tool)" = "200"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             http://127.0.0.1:8080/api/verify/arbitrary)" = "404"
+      - name: Test MCP over stdio, the way the registry entry runs it
+        shell: bash
+        run: |
+          set -euo pipefail
+          REQ='{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+          count() { python3 -c "import json,sys; print(len(json.load(open(sys.argv[1]))['result']['tools']))" "$1"; }
+          # With no environment set the image must answer MCP on stdio and
+          # start no HTTP server: that is how an MCP client runs it.
+          echo "$REQ" | docker run --rm --interactive aetre:ci > /tmp/stdio.json
+          test "$(count /tmp/stdio.json)" = "32"
+          # And one layer at a time, which is what --layer promises.
+          echo "$REQ" | docker run --rm --interactive aetre:ci --layer=micro > /tmp/stdio-micro.json
+          test "$(count /tmp/stdio-micro.json)" = "10"
+
       - name: Show container logs on failure
         if: failure()
         run: docker logs aetre-ci

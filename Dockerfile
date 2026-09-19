@@ -30,8 +30,12 @@ RUN cp /app/aetre-mcp /usr/local/bin/aetre-mcp && chmod +x /app/aetre-mcp /usr/l
 EXPOSE 8080
 
 ENV RUST_LOG=info
-ENV PORT=8080
 ENV AETRE_BIND_ADDRESS=0.0.0.0
+
+# PORT is deliberately not set. Setting it puts the binary in HTTP mode, which
+# would make `docker run -i` try to serve HTTP instead of answering MCP cleanly
+# over stdio. Nothing is lost: AETRE_HTTP_SERVER_TOKEN alone enables HTTP, and
+# the port already defaults to 8080.
 
 # AETRE_HTTP_SERVER_TOKEN is REQUIRED at runtime and is deliberately not set here:
 # a token baked into the image would be a published credential. The server refuses

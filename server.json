@@ -1,0 +1,43 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.grayclayton/aetre-mcp",
+  "title": "AETRE & The Governed Agent",
+  "description": "Decision-theoretic triage and agent gating: Bayesian value-of-information scoring, Kingman queue governance, and fail-closed execution boundaries across 32 tools.",
+  "version": "0.4.1",
+  "websiteUrl": "https://www.lithiumeel.com/aetre",
+  "repository": {
+    "url": "https://github.com/grayclayton/aetre",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/grayclayton/aetre-mcp:0.4.1",
+      "version": "0.4.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "docker",
+      "runtimeArguments": [
+        {
+          "type": "positional",
+          "value": "run",
+          "isRequired": true,
+          "description": "Run the container."
+        },
+        {
+          "type": "positional",
+          "value": "-i",
+          "isRequired": true,
+          "description": "Keep stdin open; MCP is spoken over stdio."
+        },
+        {
+          "type": "positional",
+          "value": "--rm",
+          "isRequired": true,
+          "description": "Remove the container when the client disconnects."
+        }
+      ]
+    }
+  ]
+}
