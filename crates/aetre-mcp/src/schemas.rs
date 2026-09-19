@@ -491,7 +491,7 @@ pub(crate) fn all_tools() -> Value {
                 "properties": {
                     "dataset": {
                         "type": "string",
-                        "description": "Dataset identifier or path (default: 'openreview')."
+                        "description": "Path to a JSON array of candidates to evaluate: {id, split, label, pre_triage_data:{preliminary_mean, preliminary_variance}}. Omit to run against a bundled six-candidate sample, which illustrates the evaluation but is not evidence."
                     },
                     "budget": {
                         "type": "integer",

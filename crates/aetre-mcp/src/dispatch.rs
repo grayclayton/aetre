@@ -11,6 +11,14 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 
+/// The bundled held-out fixture, embedded so `aetre_heldout_backtest` works from
+/// any working directory. An MCP client spawns the server wherever it likes, and
+/// a relative path only ever resolved inside a checkout of this repository.
+///
+/// It is six candidates. It demonstrates the shape of the evaluation; it is not
+/// evidence, and the tool says so in `dataset_source`.
+const BUNDLED_BACKTEST: &str = include_str!("../fixtures/openreview_heldout_backtest.json");
+
 /// Rejects a call whose arguments do not match the tool's declared schema.
 ///
 /// Without this a misspelled parameter is silently ignored and the default is
@@ -972,16 +980,33 @@ pub fn call_tool(name: &str, args: Value) -> Value {
             let budget = get_usize(&args, "budget", 50);
             let boundary = get_f64(&args, "boundary", 6.0);
             let split = get_str(&args, "split", "test");
-            let dataset_str = get_str(&args, "dataset", "openreview");
+            // A caller who names a dataset gets that dataset or an error. Falling
+            // back to the bundled sample would answer with six rows of fixture
+            // data while looking like a result for the file they asked for.
+            let supplied = args.get("dataset").and_then(|v| v.as_str());
+            if let Some(name) = supplied {
+                let path = std::path::PathBuf::from(name);
+                if !path.exists() {
+                    return json!({
+                        "content": [{ "type": "text", "text": format!(
+                            "Dataset not found: {name}. Pass a path to a JSON array of                              candidates, or omit `dataset` to run against the bundled                              six-candidate sample."
+                        ) }],
+                        "isError": true
+                    });
+                }
+            }
 
             let candidates_files = [
-                dataset_str,
+                supplied.unwrap_or(""),
                 "examples/datasets/openreview_heldout_backtest.json",
                 "../../examples/datasets/openreview_heldout_backtest.json",
                 "data/normalized/openreview_normalized.json",
             ];
             let mut file_path = None;
             for c in candidates_files {
+                if c.is_empty() {
+                    continue;
+                }
                 let p = std::path::PathBuf::from(c);
                 if p.exists() {
                     file_path = Some(p);
@@ -989,17 +1014,25 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                 }
             }
 
-            if let Some(p) = file_path {
-                let raw = match std::fs::read(&p) {
-                    Ok(b) => b,
+            // A real file on disk wins; otherwise fall back to the embedded
+            // fixture so the tool still answers, and name the source either way.
+            let (raw, dataset_source) = match &file_path {
+                Some(p) => match std::fs::read(p) {
+                    Ok(b) => (b, p.display().to_string()),
                     Err(e) => {
                         return json!({
                             "content": [{ "type": "text", "text": format!("Error reading dataset: {}", e) }],
                             "isError": true
                         });
                     }
-                };
+                },
+                None => (
+                    BUNDLED_BACKTEST.as_bytes().to_vec(),
+                    "bundled fixture (6 candidates, illustrative, not evidence)".to_string(),
+                ),
+            };
 
+            {
                 #[allow(dead_code)]
                 #[derive(serde::Deserialize)]
                 struct TempCandidate {
@@ -1060,7 +1093,7 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                     let precision = aetre_tp as f64 / k_eff.max(1) as f64;
 
                     let out = json!({
-                        "dataset": p.to_string_lossy(),
+                        "dataset_source": dataset_source,
                         "evaluation_split": split,
                         "candidates_evaluated": n,
                         "true_decision_flips": total_pos,
@@ -1078,15 +1111,12 @@ pub fn call_tool(name: &str, args: Value) -> Value {
                     })
                 } else {
                     json!({
-                        "content": [{ "type": "text", "text": "Failed to parse backtest dataset JSON schema" }],
+                        "content": [{ "type": "text", "text": format!(
+                            "Failed to parse backtest dataset JSON schema from {}", dataset_source
+                        ) }],
                         "isError": true
                     })
                 }
-            } else {
-                json!({
-                    "content": [{ "type": "text", "text": format!("Could not locate dataset file: {}", dataset_str) }],
-                    "isError": true
-                })
             }
         }
 
