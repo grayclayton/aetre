@@ -7,7 +7,7 @@ license.workspace = true
 description = "Command-line interface and batch simulation runner for AETRE"
 
 [dependencies]
-aetre-core = { path = "../aetre-core", version = "0.1.0" }
+aetre-core = { path = "../aetre-core", version = "0.2.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rand = "0.8"
