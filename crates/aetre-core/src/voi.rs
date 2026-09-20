@@ -161,10 +161,21 @@ pub fn evaluate_author_preflight(
 ) -> AuthorPreflightReport {
     let voi = calculate_boundary_voi(prior_mean, epistemic_variance, selection_boundary, 0.8, 0.5);
 
-    // Crowd novelty percentile approximation against baseline standard normal distribution
-    // where median novelty is 0.35, standard deviation 0.20
-    let novelty_z = (novelty_score - 0.35) / 0.20;
-    let crowd_percentile = (normal_cdf(novelty_z) * 100.0).clamp(1.0, 99.9);
+    // Rank against the measured distribution of novelty scores over a real corpus.
+    // This previously assumed novelty ~ N(0.35, 0.20^2), constants that were invented
+    // rather than measured: the corpus median is 0.42 and its spread is far tighter,
+    // so the assumed curve placed a median abstract in the top 36% and a bottom-quartile
+    // abstract in the top 51%. `crowd_novelty_rank` names the population so the figure
+    // can be checked; when no reference is bundled it says so instead of guessing.
+    let ranked = crate::novelty_reference::novelty_percentile(novelty_score);
+    let crowd_percentile = ranked
+        .as_ref()
+        .map(|rank| rank.percentile)
+        .unwrap_or(f64::NAN);
+    let crowd_novelty_rank = match ranked.as_ref() {
+        Some(rank) => rank.label(),
+        None => "unranked (no reference distribution bundled)".to_string(),
+    };
 
     let (stream, split_risk) = if prior_mean >= selection_boundary && epistemic_variance < 0.45 {
         ("FAST-PASS: DIRECT PHASE 2".to_string(), "LOW".to_string())
@@ -212,10 +223,10 @@ pub fn evaluate_author_preflight(
     use sha2::{Digest, Sha256};
     let evaluation_fingerprint = format!("aetre-eval-v1-{:x}", Sha256::digest(hash_input));
 
-    let rank_str = format!(
-        "Top_{:.1}%_Novelty",
-        100.0 - (crowd_percentile * 10.0).round() / 10.0
-    );
+    let rank_str = match ranked.as_ref() {
+        Some(rank) => format!("Top_{:.1}%25_of_{}", rank.top_percent, rank.reference_n),
+        None => "Novelty_Unranked".to_string(),
+    };
     let color = if prior_mean >= selection_boundary && epistemic_variance <= 0.35 {
         "2ea44f"
     } else if epistemic_variance >= 0.50 {
@@ -234,7 +245,9 @@ pub fn evaluate_author_preflight(
         prior_mean,
         epistemic_variance,
         novelty_score,
-        crowd_novelty_percentile: (crowd_percentile * 10.0).round() / 10.0,
+        crowd_novelty_percentile: crowd_percentile,
+        crowd_novelty_rank,
+        crowd_novelty_reference: ranked.as_ref().map(|rank| rank.corpus_description.clone()),
         reviewer_disagreement_risk: split_risk,
         predicted_triage_stream: stream,
         voi_index: (voi * 1000.0).round() / 1000.0,

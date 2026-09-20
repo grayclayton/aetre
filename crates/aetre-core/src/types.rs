@@ -170,7 +170,13 @@ pub struct AuthorPreflightReport {
     pub prior_mean: f64,
     pub epistemic_variance: f64,
     pub novelty_score: f64,
+    /// Share of the reference corpus scoring at or below this novelty score.
+    /// `NaN` when no reference distribution is bundled.
     pub crowd_novelty_percentile: f64,
+    /// The rank in prose, naming the corpus and its size so it can be audited.
+    pub crowd_novelty_rank: String,
+    /// Description of the population the percentile was computed against.
+    pub crowd_novelty_reference: Option<String>,
     pub reviewer_disagreement_risk: String,
     pub predicted_triage_stream: String,
     pub voi_index: f64,

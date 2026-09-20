@@ -76,8 +76,22 @@ pub fn format_triage_markdown(
     let first_impression_score = ((prior_mean / 2.5) * 100.0).clamp(10.0, 99.0);
     let impression_meter = render_score_meter(first_impression_score, 14);
 
-    let novelty_pct = ((1.0 - novelty) * 100.0).clamp(1.0, 99.0);
-    let novelty_meter = render_score_meter(100.0 - novelty_pct, 14);
+    // The meter fills by corpus rank, not by the raw score: a bar whose length is a
+    // rescaled heuristic output invites being read as a standing it never measured.
+    let (novelty_rank, novelty_meter) = match aetre_core::novelty_percentile(novelty) {
+        Some(rank) => (
+            format!(
+                "{} - {:.1}% of the corpus scores higher",
+                rank.label(),
+                rank.top_percent
+            ),
+            render_score_meter(rank.percentile.clamp(1.0, 99.0), 14),
+        ),
+        None => (
+            "novelty unranked: no reference distribution bundled".to_string(),
+            render_score_meter((novelty * 100.0).clamp(1.0, 99.0), 14),
+        ),
+    };
 
     let risk_meter = render_ascii_bar(risk_pct, 14);
     let tiebreaker_meter = render_score_meter((voi * 200.0).clamp(5.0, 95.0), 14);
@@ -106,7 +120,7 @@ pub fn format_triage_markdown(
 
 #### 🧭 Plain-English Intuitive Dashboard
 * **First Impression Strength:** `{impression_meter}` *(Baseline evaluator score before full review)*
-* **Novelty Heuristic:** `{novelty_meter}` *(model-derived percentile: {novelty_pct:.1}%; not a corpus rank)*
+* **Novelty Heuristic:** `{novelty_meter}` *({novelty_rank})*
 * **Reviewer Veto / Disagreement Risk:** `{risk_meter}` *({risk_level} - likelihood of a 10/10 vs 2/10 split)*
 * **Tiebreaker Priority (Value of Info):** `{tiebreaker_meter}` *(How much expert human review will impact outcome)*
 

@@ -12,6 +12,7 @@ pub mod investment;
 pub mod knapsack;
 pub mod matching;
 pub mod multi_attribute;
+pub mod novelty_reference;
 pub mod queue;
 pub mod recall;
 pub mod sequential;
@@ -35,6 +36,10 @@ pub use calibration::{
 pub use investment::{evaluate_venture_benchmark, generate_synthetic_venture_dealflow};
 pub use matching::optimize_congestion_matching;
 pub use multi_attribute::evaluate_multi_attribute_voi;
+pub use novelty_reference::{
+    build_quantiles, novelty_percentile, reference as novelty_reference, NoveltyPercentile,
+    NoveltyReference,
+};
 pub use queue::{
     calculate_governor_action, evaluate_heterogeneous_queues, evaluate_stage_queue,
     kingman_waiting_time, GovernorAction, StageQueueMetrics,

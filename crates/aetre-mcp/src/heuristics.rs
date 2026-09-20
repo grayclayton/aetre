@@ -2,6 +2,13 @@
 //!
 //! These values are routing features, not calibrated estimates of scientific quality.
 //! Production users should replace or calibrate this module on a frozen, time-split corpus.
+//!
+//! `CALIBRATION_STATUS` still reads UNCALIBRATED, and that is deliberate: nothing here
+//! is fitted against acceptance outcomes. What *is* now measured is the rank. The scores
+//! this function assigns to a real corpus are bundled in `aetre_core::novelty_reference`,
+//! so a reported percentile is an ordinary empirical CDF lookup against a named
+//! population rather than a rescaled score wearing the word "percentile". Editing this
+//! file invalidates those quantiles; the test at the bottom enforces regenerating them.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -281,6 +288,75 @@ mod tests {
             "substance {} should outscore hype {}",
             substantive.prior_mean,
             hype.prior_mean
+        );
+    }
+}
+
+#[cfg(test)]
+mod reference_drift {
+    use super::SCORING_METHOD;
+
+    /// SHA-256 of this file, recorded when the bundled novelty reference was last
+    /// generated. See `scorer_changes_invalidate_the_bundled_reference` below.
+    const SCORER_FINGERPRINT_AT_LAST_REFERENCE_BUILD: &str =
+        "2b45845c5bb266a34fadc5541ebe1ee7bf4d17d369d66a0724a46fddf1432e36";
+
+    fn scorer_fingerprint() -> String {
+        use sha2::{Digest, Sha256};
+        // Hash the whole scorer, not just the keyword lists: a changed coefficient
+        // shifts the score distribution exactly as a changed keyword does.
+        let source = include_str!("heuristics.rs");
+        // Skip the recorded constant itself - both its declaration and the wrapped
+        // literal rustfmt may put on the following line - or updating it would change
+        // the hash it is compared against and the test could never be satisfied.
+        let is_recorded_constant = |line: &str| {
+            if line.contains("SCORER_FINGERPRINT_AT_LAST_REFERENCE_BUILD") {
+                return true;
+            }
+            let bare = line.trim().trim_end_matches(';').trim_matches('"');
+            bare.len() == 64 && bare.bytes().all(|b| b.is_ascii_hexdigit())
+        };
+        let normalised: String = source
+            .lines()
+            .filter(|line| !is_recorded_constant(line))
+            .map(str::trim_end)
+            .collect::<Vec<_>>()
+            .join("\n");
+        format!("{:x}", Sha256::digest(normalised.as_bytes()))
+    }
+
+    /// The bundled quantiles are the scores *this* function assigned to the corpus.
+    /// Change the scorer and every percentile computed against them becomes a rank
+    /// against a distribution nothing is drawn from any more - which is the exact
+    /// defect the reference was added to remove.
+    ///
+    /// If this fails, regenerate and update the constant above:
+    ///
+    /// ```text
+    /// cargo run -p aetre-mcp --release -- --emit-novelty-reference <corpus.json> \
+    ///     openreview-iclr-neurips "<description>" \
+    ///     > crates/aetre-core/reference/novelty_reference_v1.json
+    /// ```
+    ///
+    /// If the edit provably cannot move any score - a comment, a rename - update
+    /// the constant alone and say so in the commit message.
+    #[test]
+    fn scorer_changes_invalidate_the_bundled_reference() {
+        assert_eq!(
+            scorer_fingerprint(),
+            SCORER_FINGERPRINT_AT_LAST_REFERENCE_BUILD,
+            "the lexical scorer changed since the novelty reference was generated; \
+             regenerate it with --emit-novelty-reference and update this constant"
+        );
+    }
+
+    /// A percentile is only valid for scores from the method it was measured on.
+    #[test]
+    fn bundled_reference_names_this_scoring_method() {
+        let reference = aetre_core::novelty_reference().expect("reference bundled");
+        assert_eq!(
+            reference.scoring_method, SCORING_METHOD,
+            "the bundled reference was built by a different scoring method"
         );
     }
 }

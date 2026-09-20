@@ -5,6 +5,7 @@ mod helpers;
 mod heuristics;
 mod layer;
 mod license;
+mod novelty_corpus;
 mod prompts;
 mod protocol;
 mod resources;
@@ -33,6 +34,34 @@ fn main() -> io::Result<()> {
         Err(message) => {
             eprintln!("ERROR: {message}");
             std::process::exit(2);
+        }
+    }
+
+    if let Some(index) = args.iter().position(|a| a == "--emit-novelty-reference") {
+        let Some(corpus_path) = args.get(index + 1) else {
+            eprintln!("ERROR: --emit-novelty-reference needs a path to a corpus JSON file");
+            eprintln!(
+                "USAGE: aetre-mcp --emit-novelty-reference <corpus.json> [corpus-id] [description]"
+            );
+            std::process::exit(2);
+        };
+        let corpus_id = args
+            .get(index + 2)
+            .cloned()
+            .unwrap_or_else(|| "unnamed-corpus".to_string());
+        let description = args
+            .get(index + 3)
+            .cloned()
+            .unwrap_or_else(|| format!("corpus loaded from {corpus_path}"));
+        match novelty_corpus::emit(corpus_path, &corpus_id, &description) {
+            Ok(document) => {
+                println!("{document}");
+                return Ok(());
+            }
+            Err(message) => {
+                eprintln!("ERROR: {message}");
+                std::process::exit(2);
+            }
         }
     }
 

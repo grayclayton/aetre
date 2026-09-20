@@ -76,3 +76,30 @@ pub fn utc_timestamp_rfc3339() -> String {
         time_of_day % 60
     )
 }
+
+/// Ranks a lexical novelty score against the bundled reference corpus.
+///
+/// These three helpers keep the shape of a ranked field consistent across tools:
+/// a prose label naming the population, the numeric percentile, and the corpus
+/// description. When no reference is bundled they report that rather than falling
+/// back to a rescaled raw score, which is what made the old figure unauditable.
+pub fn novelty_rank_label(score: f64) -> String {
+    match aetre_core::novelty_percentile(score) {
+        Some(rank) => rank.label(),
+        None => "unranked (no reference distribution bundled)".to_string(),
+    }
+}
+
+pub fn novelty_rank_percentile(score: f64) -> Value {
+    match aetre_core::novelty_percentile(score) {
+        Some(rank) => Value::from(rank.percentile),
+        None => Value::Null,
+    }
+}
+
+pub fn novelty_rank_reference() -> Value {
+    match aetre_core::novelty_reference() {
+        Some(reference) => Value::from(reference.corpus_description.clone()),
+        None => Value::Null,
+    }
+}
