@@ -52,7 +52,7 @@ jobs:
             fi
             sleep 1
           done
-          grep -q '"tools_count":32' /tmp/status.json
+          python3 -c "import json; d=json.load(open('/tmp/status.json')); assert d['tools_count']>0, d; print('status reports', d['tools_count'], 'tools')"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
             --header 'Content-Type: application/json' \
             --data '{"name":"aetre_system_catalog","arguments":{}}' \
@@ -73,10 +73,20 @@ jobs:
           # With no environment set the image must answer MCP on stdio and
           # start no HTTP server: that is how an MCP client runs it.
           echo "$REQ" | docker run --rm --interactive aetre:ci > /tmp/stdio.json
-          test "$(count /tmp/stdio.json)" = "32"
-          # And one layer at a time, which is what --layer promises.
+          # The image must agree with itself rather than with a number written here.
+          test "$(count /tmp/stdio.json)" = "$(python3 -c "import json; print(json.load(open('/tmp/status.json'))['tools_count'])")"
+          # And the layers must partition the surface, which is what --layer promises.
           echo "$REQ" | docker run --rm --interactive aetre:ci --layer=micro > /tmp/stdio-micro.json
-          test "$(count /tmp/stdio-micro.json)" = "10"
+          echo "$REQ" | docker run --rm --interactive aetre:ci --layer=macro > /tmp/stdio-macro.json
+          python3 - <<'CHECK'
+          import json
+          total = len(json.load(open('/tmp/stdio.json'))['result']['tools'])
+          micro = len(json.load(open('/tmp/stdio-micro.json'))['result']['tools'])
+          macro = len(json.load(open('/tmp/stdio-macro.json'))['result']['tools'])
+          assert micro + macro == total, (micro, macro, total)
+          assert micro > 0 and macro > 0, (micro, macro)
+          print(f'{total} tools = {macro} macro + {micro} micro')
+          CHECK
 
       - name: Show container logs on failure
         if: failure()

@@ -1173,7 +1173,14 @@ fn dispatch_tool(name: &str, args: Value) -> Value {
                     "precision": (s.precision * 1000.0).round() / 10.0,
                     "recall": (s.recall * 1000.0).round() / 10.0,
                 }));
-                if best.is_none_or(|(_, p, _)| s.precision > p) {
+                // A match rather than is_none_or: that method landed in 1.82 and the
+                // container builds on 1.80. map_or(true, ..) would trip clippy on
+                // newer toolchains, so neither helper is safe across both.
+                let improves = match best {
+                    None => true,
+                    Some((_, best_precision, _)) => s.precision > best_precision,
+                };
+                if improves {
                     best = Some((boundary, s.precision, s.recall));
                 }
                 boundary += step;
