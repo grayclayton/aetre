@@ -23,6 +23,10 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace --locked
+      - name: Build the server for the gate check
+        run: cargo build -p aetre-mcp --release --locked
+      - name: Hold the Tier 0 gate to CPython's verdict
+        run: python3 scripts/check-gate-against-cpython.py
 
   dependency-audit:
     runs-on: ubuntu-latest
