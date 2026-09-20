@@ -40,6 +40,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build image
         run: docker build --tag aetre:ci .
+      - name: Report image size
+        run: |
+          bytes=$(docker image inspect aetre:ci --format '{{.Size}}')
+          echo "aetre:ci is $((bytes / 1048576)) MB uncompressed"
+
       - name: Start image
         run: docker run --detach --name aetre-ci --env AETRE_HTTP_SERVER_TOKEN=ci-token --publish 8080:8080 aetre:ci
       - name: Test status, authentication, and receipt behavior

@@ -12,18 +12,20 @@ COPY Cargo.toml Cargo.lock ./
 COPY crates/ crates/
 RUN cargo build --locked --release -p aetre-mcp
 
-# Stage 2: Distroless minimal runtime
-FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
-    rm -rf /var/lib/apt/lists/* && \
-    useradd --system --uid 10001 --create-home aetre
+# Stage 2: distroless runtime.
+#
+# The binary is 1.6 MB; on debian:bookworm-slim the image was 32.7 MB, nearly
+# all of it a userland nothing here uses. distroless/cc carries glibc, libgcc
+# and ca-certificates and nothing else: no shell, no package manager.
+#
+# cc rather than static because this is the gnu target and needs glibc, and
+# :nonroot because there is no useradd without a shell.
+FROM gcr.io/distroless/cc-debian12:nonroot
 
 WORKDIR /app
 
-# Copy compiled binary from builder
+# COPY preserves the executable bit, which matters: there is no chmod here.
 COPY --from=builder /usr/src/aetre/target/release/aetre-mcp /app/aetre-mcp
-RUN cp /app/aetre-mcp /usr/local/bin/aetre-mcp && chmod +x /app/aetre-mcp /usr/local/bin/aetre-mcp
 
 # HTTP JSON-RPC API (/api/status, /api/tool). This is not an MCP transport:
 # MCP clients speak stdio to this same binary.
@@ -52,7 +54,6 @@ ENV AETRE_BIND_ADDRESS=0.0.0.0
 #
 # Authenticate POST /api/tool with the header:  X-Aetre-Server-Token: <token>
 
-USER aetre
 
 ENTRYPOINT ["/app/aetre-mcp"]
 
