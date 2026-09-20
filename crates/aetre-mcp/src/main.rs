@@ -10,6 +10,7 @@ mod prompts;
 mod protocol;
 mod resources;
 mod schemas;
+mod syntax_gate;
 
 pub mod format;
 pub mod server;
