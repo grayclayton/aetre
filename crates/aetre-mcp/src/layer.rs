@@ -84,7 +84,7 @@ mod layer_tests {
             .filter(|n| tool_in_layer(n, Layer::Micro))
             .count();
         assert_eq!(macro_count + micro_count, names.len());
-        assert_eq!(macro_count, 22);
+        assert_eq!(macro_count, 23);
         assert_eq!(micro_count, 10);
 
         // An unknown tool must stay unknown rather than become "not exposed".

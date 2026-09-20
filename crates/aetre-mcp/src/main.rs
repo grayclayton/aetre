@@ -285,7 +285,7 @@ mod tests {
     fn test_list_tools() {
         let tools = list_tools();
         let arr = tools.as_array().unwrap();
-        assert_eq!(arr.len(), 32);
+        assert_eq!(arr.len(), 33);
     }
 
     #[test]

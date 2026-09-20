@@ -88,6 +88,89 @@ Accepted: {}.",
     }))
 }
 
+/// A candidate as the held-out corpora store one.
+#[allow(dead_code)]
+#[derive(serde::Deserialize)]
+pub(crate) struct BacktestCandidate {
+    pub(crate) id: String,
+    pub(crate) split: String,
+    pub(crate) label: u8,
+    pub(crate) pre_triage_data: BacktestPreTriage,
+}
+
+#[allow(dead_code)]
+#[derive(serde::Deserialize)]
+pub(crate) struct BacktestPreTriage {
+    pub(crate) preliminary_mean: f64,
+    pub(crate) preliminary_variance: f64,
+    pub(crate) m_reviews_count: Option<usize>,
+    pub(crate) preliminary_mean_confidence: Option<f64>,
+}
+
+pub(crate) struct BacktestScore {
+    pub(crate) evaluated: usize,
+    pub(crate) positives: usize,
+    pub(crate) budget: usize,
+    pub(crate) caught: usize,
+    pub(crate) precision: f64,
+    pub(crate) recall: f64,
+}
+
+/// Ranks candidates by boundary VOI and reports what the top K catches.
+///
+/// Shared by the backtest and the boundary fit so the fitted threshold is
+/// chosen against exactly the procedure it will later be used for.
+pub(crate) fn score_backtest(
+    records: &[BacktestCandidate],
+    split: &str,
+    budget: usize,
+    boundary: f64,
+) -> BacktestScore {
+    let eval: Vec<&BacktestCandidate> = records
+        .iter()
+        .filter(|r| r.split == split || split == "all")
+        .collect();
+    let n = eval.len();
+    let positives = eval.iter().filter(|r| r.label == 1).count();
+
+    let mut scores: Vec<(usize, f64)> = eval
+        .iter()
+        .enumerate()
+        .map(|(idx, r)| {
+            let m = r.pre_triage_data.preliminary_mean;
+            let m_count = r.pre_triage_data.m_reviews_count.unwrap_or(2) as f64;
+            let v = r.pre_triage_data.preliminary_variance.max(0.01);
+            let conf = r
+                .pre_triage_data
+                .preliminary_mean_confidence
+                .unwrap_or(3.0)
+                .clamp(1.0, 5.0);
+            let sig_noise = (2.0 / conf).max(0.3);
+            let post_var = (v / m_count).max(0.01);
+            (
+                idx,
+                aetre_core::calculate_boundary_voi(m, post_var, boundary, sig_noise, 0.50),
+            )
+        })
+        .collect();
+    scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    let k_eff = budget.min(n);
+    let caught = scores[..k_eff]
+        .iter()
+        .filter(|(idx, _)| eval[*idx].label == 1)
+        .count();
+
+    BacktestScore {
+        evaluated: n,
+        positives,
+        budget: k_eff,
+        caught,
+        precision: caught as f64 / k_eff.max(1) as f64,
+        recall: caught as f64 / positives.max(1) as f64,
+    }
+}
+
 /// Records, in the result, where the caller's estimates came from and which
 /// arguments they never supplied.
 ///
@@ -1046,9 +1129,100 @@ fn dispatch_tool(name: &str, args: Value) -> Value {
             })
         }
 
+        "aetre_fit_boundary" => {
+            let split = get_str(&args, "split", "calib");
+            let budget = get_usize(&args, "budget", 200);
+            let min = get_f64(&args, "grid_min", 1.0);
+            let max = get_f64(&args, "grid_max", 10.0);
+            let step = get_f64(&args, "grid_step", 0.25).max(0.01);
+
+            let Some(name) = args.get("dataset").and_then(|v| v.as_str()) else {
+                return json!({
+                    "content": [{ "type": "text", "text":
+                        "dataset is required: fit the boundary against your own calibration data,                          not against a sample." }],
+                    "isError": true
+                });
+            };
+            let path = std::path::PathBuf::from(name);
+            if !path.exists() {
+                return json!({
+                    "content": [{ "type": "text", "text": format!("Dataset not found: {name}.") }],
+                    "isError": true
+                });
+            }
+            let Ok(raw) = std::fs::read(&path) else {
+                return json!({
+                    "content": [{ "type": "text", "text": format!("Could not read {name}.") }],
+                    "isError": true
+                });
+            };
+            let Ok(records) = serde_json::from_slice::<Vec<BacktestCandidate>>(&raw) else {
+                return json!({
+                    "content": [{ "type": "text", "text": format!("Could not parse {name} as a candidate array.") }],
+                    "isError": true
+                });
+            };
+
+            let mut curve = Vec::new();
+            let mut best: Option<(f64, f64, f64)> = None;
+            let mut boundary = min;
+            while boundary <= max + 1e-9 {
+                let s = score_backtest(&records, split, budget, boundary);
+                curve.push(json!({
+                    "boundary": (boundary * 1000.0).round() / 1000.0,
+                    "precision": (s.precision * 1000.0).round() / 10.0,
+                    "recall": (s.recall * 1000.0).round() / 10.0,
+                }));
+                if best.is_none_or(|(_, p, _)| s.precision > p) {
+                    best = Some((boundary, s.precision, s.recall));
+                }
+                boundary += step;
+            }
+
+            let Some((fitted, precision, recall)) = best else {
+                return json!({
+                    "content": [{ "type": "text", "text": "The grid was empty: check grid_min, grid_max and grid_step." }],
+                    "isError": true
+                });
+            };
+
+            let reference = score_backtest(&records, split, budget, 6.0);
+            let base_rate = reference.positives as f64 / reference.evaluated.max(1) as f64;
+            let at_edge = (fitted - min).abs() < 1e-9 || (fitted - max).abs() < 1e-9;
+
+            let out = json!({
+                "fitted_boundary": (fitted * 1000.0).round() / 1000.0,
+                "fitted_on_split": split,
+                "candidates": reference.evaluated,
+                "positives": reference.positives,
+                "base_rate_pct": (base_rate * 1000.0).round() / 10.0,
+                "precision_at_k_pct": (precision * 1000.0).round() / 10.0,
+                "recall_at_k_pct": (recall * 1000.0).round() / 10.0,
+                "lift_over_random": if base_rate > 0.0 {
+                    (precision / base_rate * 100.0).round() / 100.0
+                } else { 0.0 },
+                "budget_k": budget,
+                "grid": { "min": min, "max": max, "step": step },
+                "optimum_at_grid_edge": at_edge,
+                "curve": curve,
+                "caution": "Fitted on this split. Evaluate on a split you did not fit on before                             believing the number, and refit per venue: the optimum is sharp.",
+                "dataset_source": path.display().to_string(),
+            });
+
+            json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                "isError": false
+            })
+        }
+
         "aetre_heldout_backtest" => {
             let budget = get_usize(&args, "budget", 50);
             let boundary = get_f64(&args, "boundary", 6.0);
+            let boundary_source = if args.get("boundary").is_some() {
+                "supplied by the caller".to_string()
+            } else {
+                "default 6.0, not fitted to this corpus - run aetre_fit_boundary".to_string()
+            };
             let split = get_str(&args, "split", "test");
             // A caller who names a dataset gets that dataset or an error. Falling
             // back to the bundled sample would answer with six rows of fixture
@@ -1103,90 +1277,42 @@ fn dispatch_tool(name: &str, args: Value) -> Value {
             };
 
             {
-                #[allow(dead_code)]
-                #[derive(serde::Deserialize)]
-                struct TempCandidate {
-                    id: String,
-                    split: String,
-                    label: u8,
-                    pre_triage_data: PreTriageRaw,
-                }
-                #[allow(dead_code)]
-                #[derive(serde::Deserialize)]
-                struct PreTriageRaw {
-                    preliminary_mean: f64,
-                    preliminary_variance: f64,
-                    m_reviews_count: Option<usize>,
-                    preliminary_mean_confidence: Option<f64>,
-                }
-
-                if let Ok(records) = serde_json::from_slice::<Vec<TempCandidate>>(&raw) {
-                    let eval_records: Vec<&TempCandidate> = records
-                        .iter()
-                        .filter(|r| r.split == split || split == "all")
-                        .collect();
-                    let n = eval_records.len();
-                    let total_pos = eval_records.iter().filter(|r| r.label == 1).count();
-
-                    let mut aetre_scores: Vec<(usize, f64)> = eval_records
-                        .iter()
-                        .enumerate()
-                        .map(|(idx, r)| {
-                            let m = r.pre_triage_data.preliminary_mean;
-                            let m_count = r.pre_triage_data.m_reviews_count.unwrap_or(2) as f64;
-                            let v = r.pre_triage_data.preliminary_variance.max(0.01);
-                            let conf = r
-                                .pre_triage_data
-                                .preliminary_mean_confidence
-                                .unwrap_or(3.0)
-                                .clamp(1.0, 5.0);
-                            let sig_noise = (2.0 / conf).max(0.3);
-                            let post_var = (v / m_count).max(0.01);
-                            let voi = aetre_core::calculate_boundary_voi(
-                                m, post_var, boundary, sig_noise, 0.50,
-                            );
-                            (idx, voi)
-                        })
-                        .collect();
-
-                    aetre_scores
-                        .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-                    let k_eff = budget.min(n);
-                    let mut aetre_tp = 0;
-                    for &(idx, _) in &aetre_scores[..k_eff] {
-                        if eval_records[idx].label == 1 {
-                            aetre_tp += 1;
-                        }
-                    }
-
-                    let recall = aetre_tp as f64 / total_pos.max(1) as f64;
-                    let precision = aetre_tp as f64 / k_eff.max(1) as f64;
-
-                    let out = json!({
-                        "dataset_source": dataset_source,
-                        "evaluation_split": split,
-                        "candidates_evaluated": n,
-                        "true_decision_flips": total_pos,
-                        "budget_allocated_K": k_eff,
-                        "aetre_voi_precision_at_k": (precision * 1000.0).round() / 10.0,
-                        "aetre_voi_recall_at_k": (recall * 1000.0).round() / 10.0,
-                        "aetre_discoveries_caught": aetre_tp,
-                        "reviewer_hours_per_discovery": if aetre_tp > 0 { (k_eff as f64 * 4.0) / aetre_tp as f64 } else { k_eff as f64 * 4.0 },
-                        "status": "BACKTEST_EVALUATED_SUCCESSFULLY"
-                    });
-
-                    json!({
-                        "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
-                        "isError": false
-                    })
-                } else {
-                    json!({
+                let Ok(records) = serde_json::from_slice::<Vec<BacktestCandidate>>(&raw) else {
+                    return json!({
                         "content": [{ "type": "text", "text": format!(
                             "Failed to parse backtest dataset JSON schema from {}", dataset_source
                         ) }],
                         "isError": true
-                    })
-                }
+                    });
+                };
+
+                // The same scorer the boundary fit uses, so a fitted threshold is
+                // evaluated by exactly the procedure that chose it.
+                let scored = score_backtest(&records, split, budget, boundary);
+
+                let out = json!({
+                    "dataset_source": dataset_source,
+                    "boundary": boundary,
+                    "boundary_source": boundary_source,
+                    "evaluation_split": split,
+                    "candidates_evaluated": scored.evaluated,
+                    "true_decision_flips": scored.positives,
+                    "budget_allocated_K": scored.budget,
+                    "aetre_voi_precision_at_k": (scored.precision * 1000.0).round() / 10.0,
+                    "aetre_voi_recall_at_k": (scored.recall * 1000.0).round() / 10.0,
+                    "aetre_discoveries_caught": scored.caught,
+                    "reviewer_hours_per_discovery": if scored.caught > 0 {
+                        (scored.budget as f64 * 4.0) / scored.caught as f64
+                    } else {
+                        scored.budget as f64 * 4.0
+                    },
+                    "status": "BACKTEST_EVALUATED_SUCCESSFULLY"
+                });
+
+                json!({
+                    "content": [{ "type": "text", "text": serde_json::to_string_pretty(&out).unwrap_or_default() }],
+                    "isError": false
+                })
             }
         }
 
@@ -2260,5 +2386,61 @@ mod provenance_tests {
             json!({ "arrival_rate": 96.0, "service_rate": 100.0 }),
         );
         assert!(body(&out).get("prior_source").is_none());
+    }
+}
+
+#[cfg(test)]
+mod boundary_fit_tests {
+    use super::*;
+
+    /// Candidates whose true flips sit near 5.5, so a boundary there should rank
+    /// them above a boundary at 8.0.
+    fn corpus() -> Vec<BacktestCandidate> {
+        (0..200)
+            .map(|i| {
+                let mean = 3.0 + (i % 10) as f64 * 0.5;
+                let flips = (5.0..6.0).contains(&mean);
+                BacktestCandidate {
+                    id: format!("c{i}"),
+                    split: "calib".to_string(),
+                    label: u8::from(flips),
+                    pre_triage_data: BacktestPreTriage {
+                        preliminary_mean: mean,
+                        preliminary_variance: 1.0,
+                        m_reviews_count: Some(2),
+                        preliminary_mean_confidence: Some(3.0),
+                    },
+                }
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_boundary_near_the_flips_beats_one_far_away() {
+        let records = corpus();
+        let near = score_backtest(&records, "calib", 40, 5.5);
+        let far = score_backtest(&records, "calib", 40, 8.0);
+        assert!(
+            near.precision > far.precision,
+            "near {} should beat far {}",
+            near.precision,
+            far.precision
+        );
+    }
+
+    #[test]
+    fn scoring_respects_the_split_and_the_budget() {
+        let records = corpus();
+        let s = score_backtest(&records, "calib", 40, 5.5);
+        assert_eq!(s.evaluated, 200);
+        assert_eq!(s.budget, 40);
+        assert!(s.caught <= s.budget);
+        assert_eq!(score_backtest(&records, "test", 40, 5.5).evaluated, 0);
+    }
+
+    #[test]
+    fn fitting_requires_a_dataset_rather_than_guessing_one() {
+        let out = call_tool("aetre_fit_boundary", json!({}));
+        assert_eq!(out["isError"], true);
     }
 }

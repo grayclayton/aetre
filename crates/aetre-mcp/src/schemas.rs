@@ -489,6 +489,26 @@ pub(crate) fn all_tools() -> Value {
             }
         },
         {
+            "name": "aetre_fit_boundary",
+            "description": "Fits the decision boundary to a venue's own calibration data by sweeping thresholds and ranking candidates by boundary VOI at each. The boundary determines whether triage beats chance, and a default carried from another corpus generally does not.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "dataset": {
+                        "type": "string",
+                        "description": "Path to a JSON array of candidates: {id, split, label, pre_triage_data:{preliminary_mean, preliminary_variance}}. Required: fit against your own data."
+                    },
+                    "split": { "type": "string", "description": "Split to fit on. Defaults to 'calib'. Fit and evaluate on different splits." },
+                    "budget": { "type": "integer", "description": "Review budget K the boundary is optimised for. Defaults to 200." },
+                    "grid_min": { "type": "number", "description": "Lowest boundary to try. Defaults to 1.0." },
+                    "grid_max": { "type": "number", "description": "Highest boundary to try. Defaults to 10.0." },
+                    "grid_step": { "type": "number", "description": "Step between candidate boundaries. Defaults to 0.25." },
+                    "api_key": { "type": "string", "description": "Optional license key." }
+                },
+                "required": ["dataset"]
+            }
+        },
+        {
             "name": "aetre_heldout_backtest",
             "description": "Runs a multi-policy held-out review allocation backtest across 8 triage policies under fixed review budget K, evaluating true decision flips, precision, recall, and paired bootstrap intervals.",
             "inputSchema": {
